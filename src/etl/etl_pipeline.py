@@ -87,6 +87,12 @@ def validate_contract(df, filename, contracts):
     missing = sorted(expected - actual)
     if missing:
         issues.append("Missing contract columns: " + ", ".join(missing))
+    unexpected = sorted(actual - expected)
+    if unexpected:
+        issues.append(
+            "Unexpected columns (preserved; contract review required): "
+            + ", ".join(unexpected)
+        )
     for _, rule in matched.iterrows():
         col = str(rule["column_name"]).strip().lower()
         nullable = str(rule.get("nullable", "yes")).strip().lower() in {"yes", "y", "true", "1"}

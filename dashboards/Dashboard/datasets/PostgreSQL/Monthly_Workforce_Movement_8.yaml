@@ -1,0 +1,92 @@
+table_name: Monthly Workforce Movement
+main_dttm_col: null
+currency_code_column: null
+description: null
+default_endpoint: null
+offset: 0
+cache_timeout: null
+catalog: pulseiq_warehouse
+schema: null
+sql: "\r\nWITH monthly_joiners AS (\r\n    SELECT\r\n        DATE_TRUNC('month', hire_date)::date\
+  \ AS month,\r\n        COUNT(DISTINCT employee_id) AS joiners\r\n    FROM warehouse.dim_employee\r\
+  \n    WHERE employee_key <> -1\r\n      AND hire_date IS NOT NULL\r\n    GROUP BY\
+  \ 1\r\n),\r\nmonthly_endings AS (\r\n    SELECT\r\n        DATE_TRUNC('month', valid_to)::date\
+  \ AS month,\r\n        COUNT(DISTINCT employee_id) AS record_endings\r\n    FROM\
+  \ warehouse.dim_employee\r\n    WHERE employee_key <> -1\r\n      AND is_current\
+  \ = FALSE\r\n      AND valid_to IS NOT NULL\r\n      AND valid_to < DATE '9999-12-31'\r\
+  \n    GROUP BY 1\r\n),\r\nmonths AS (\r\n    SELECT month FROM monthly_joiners\r\
+  \n    UNION\r\n    SELECT month FROM monthly_endings\r\n)\r\nSELECT\r\n    TO_CHAR(m.month,\
+  \ 'YYYY-MM') AS month,\r\n    COALESCE(j.joiners, 0) AS joiners,\r\n    COALESCE(e.record_endings,\
+  \ 0) AS record_endings,\r\n    COALESCE(j.joiners, 0)\r\n      - COALESCE(e.record_endings,\
+  \ 0) AS net_change\r\nFROM months m\r\nLEFT JOIN monthly_joiners j ON j.month =\
+  \ m.month\r\nLEFT JOIN monthly_endings e ON e.month = m.month\r\nORDER BY m.month;\r\
+  \n"
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+folders: null
+uuid: e9be001e-b4c7-49cc-af1c-3a18532ee59f
+metrics: []
+columns:
+- column_name: net_change
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: LONGINTEGER
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra:
+    warning_markdown: null
+- column_name: record_endings
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: LONGINTEGER
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra:
+    warning_markdown: null
+- column_name: joiners
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: LONGINTEGER
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra:
+    warning_markdown: null
+- column_name: month
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra:
+    warning_markdown: null
+version: 1.0.0
+database_uuid: c952c5ca-4ab9-4c10-ad29-79ba6e573f02

@@ -1,0 +1,222 @@
+result_id,source_dataset,record_id,employee_id,period,anomaly_score,flagged,reason_code,reason_text,money_at_risk,model_version,scored_at,period_key
+AN-0001,attendance_monthly_features,AF-03170,EMP-0356,2025-07-01,1.0,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0002,attendance_monthly_features,AF-05918,EMP-0585,2025-09-01,0.998,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20250930
+AN-0003,attendance_monthly_features,AF-06802,EMP-0646,2026-06-01,0.998,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0004,attendance_monthly_features,AF-02819,EMP-0318,2026-06-01,0.998,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0005,attendance_monthly_features,AF-03112,EMP-0347,2026-09-01,0.992,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260930
+AN-0006,attendance_monthly_features,AF-06635,EMP-0633,2026-08-01,0.992,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0007,attendance_monthly_features,AF-05447,EMP-0553,2026-09-01,0.992,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260930
+AN-0008,attendance_monthly_features,AF-07324,EMP-0730,2026-09-01,0.991,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260930
+AN-0009,attendance_monthly_features,AF-05875,EMP-0582,2026-01-01,0.991,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0010,attendance_monthly_features,AF-02087,EMP-0246,2025-08-01,0.991,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20250831
+AN-0011,attendance_monthly_features,AF-00494,EMP-0056,2025-11-01,0.99,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0012,attendance_monthly_features,AF-00736,EMP-0087,2026-05-01,0.99,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0013,attendance_monthly_features,AF-04333,EMP-0460,2025-10-01,0.99,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0014,attendance_monthly_features,AF-05661,EMP-0570,2025-11-01,0.99,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0015,attendance_monthly_features,AF-06443,EMP-0619,2026-08-01,0.99,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0016,attendance_monthly_features,AF-03098,EMP-0347,2025-07-01,0.925,Y,LONG_UNPAID_ABSENCE,13 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0017,attendance_monthly_features,AF-04681,EMP-0494,2025-09-01,0.916,Y,LONG_UNPAID_ABSENCE,13 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250930
+AN-0018,attendance_monthly_features,AF-01620,EMP-0188,2025-04-01,0.914,Y,LONG_UNPAID_ABSENCE,14 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0019,attendance_monthly_features,AF-01480,EMP-0158,2026-07-01,0.892,Y,LONG_UNPAID_ABSENCE,11 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0020,attendance_monthly_features,AF-02473,EMP-0285,2026-08-01,0.886,Y,LONG_UNPAID_ABSENCE,13 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0021,attendance_monthly_features,AF-02651,EMP-0305,2025-12-01,0.882,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0022,attendance_monthly_features,AF-06074,EMP-0594,2026-07-01,0.871,Y,LONG_UNPAID_ABSENCE,14 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0023,attendance_monthly_features,AF-02205,EMP-0256,2025-09-01,0.87,Y,LONG_UNPAID_ABSENCE,12 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250930
+AN-0024,attendance_monthly_features,AF-04604,EMP-0484,2025-12-01,0.868,Y,LONG_UNPAID_ABSENCE,10 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0025,attendance_monthly_features,AF-04182,EMP-0447,2026-08-01,0.866,Y,LONG_UNPAID_ABSENCE,14 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0026,attendance_monthly_features,AF-02143,EMP-0249,2026-07-01,0.863,Y,LONG_UNPAID_ABSENCE,13 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0027,attendance_monthly_features,AF-01343,EMP-0147,2026-01-01,0.863,Y,LONG_UNPAID_ABSENCE,9 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0028,attendance_monthly_features,AF-00927,EMP-0100,2025-10-01,0.862,Y,LONG_UNPAID_ABSENCE,14 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0029,attendance_monthly_features,AF-04406,EMP-0466,2026-09-01,0.862,Y,LONG_UNPAID_ABSENCE,8 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260930
+AN-0030,attendance_monthly_features,AF-02170,EMP-0254,2025-10-01,0.858,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0031,attendance_monthly_features,AF-00792,EMP-0092,2026-07-01,0.857,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0032,attendance_monthly_features,AF-01599,EMP-0184,2026-07-01,0.857,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0033,attendance_monthly_features,AF-05048,EMP-0522,2026-07-01,0.857,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0034,attendance_monthly_features,AF-03208,EMP-0361,2026-07-01,0.857,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0035,attendance_monthly_features,AF-07269,EMP-0709,2026-06-01,0.854,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0036,attendance_monthly_features,AF-07063,EMP-0673,2026-01-01,0.851,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0037,attendance_monthly_features,AF-06601,EMP-0630,2026-02-01,0.85,Y,LONG_UNPAID_ABSENCE,8 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0038,attendance_monthly_features,AF-05047,EMP-0522,2026-06-01,0.849,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0039,attendance_monthly_features,AF-03207,EMP-0361,2026-06-01,0.849,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0040,attendance_monthly_features,AF-05029,EMP-0521,2026-06-01,0.849,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0041,attendance_monthly_features,AF-02738,EMP-0313,2025-09-01,0.849,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20250930
+AN-0042,attendance_monthly_features,AF-02741,EMP-0313,2025-12-01,0.849,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0043,attendance_monthly_features,AF-02904,EMP-0329,2025-12-01,0.849,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0044,attendance_monthly_features,AF-00791,EMP-0092,2026-06-01,0.849,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0045,attendance_monthly_features,AF-02737,EMP-0313,2025-08-01,0.848,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20250831
+AN-0046,attendance_monthly_features,AF-02905,EMP-0329,2026-01-01,0.848,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0047,attendance_monthly_features,AF-03908,EMP-0426,2026-02-01,0.847,Y,LONG_UNPAID_ABSENCE,13 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0048,attendance_monthly_features,AF-00345,EMP-0041,2026-03-01,0.846,Y,LONG_UNPAID_ABSENCE,9 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0049,attendance_monthly_features,AF-04174,EMP-0447,2025-12-01,0.845,Y,LONG_UNPAID_ABSENCE,13 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0050,attendance_monthly_features,AF-04263,EMP-0456,2025-12-01,0.845,Y,LONG_UNPAID_ABSENCE,11 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0051,attendance_monthly_features,AF-05030,EMP-0521,2026-07-01,0.845,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0052,attendance_monthly_features,AF-06914,EMP-0656,2026-08-01,0.844,Y,LONG_UNPAID_ABSENCE,11 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0053,attendance_monthly_features,AF-05809,EMP-0578,2026-03-01,0.843,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0054,attendance_monthly_features,AF-03210,EMP-0361,2026-09-01,0.837,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260930
+AN-0055,attendance_monthly_features,AF-03209,EMP-0361,2026-08-01,0.837,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0056,attendance_monthly_features,AF-00793,EMP-0092,2026-08-01,0.837,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0057,attendance_monthly_features,AF-01601,EMP-0184,2026-09-01,0.837,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260930
+AN-0058,attendance_monthly_features,AF-01600,EMP-0184,2026-08-01,0.837,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0059,attendance_monthly_features,AF-04665,EMP-0489,2026-07-01,0.834,Y,LONG_UNPAID_ABSENCE,9 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0060,attendance_monthly_features,AF-05045,EMP-0522,2026-04-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260430
+AN-0061,attendance_monthly_features,AF-05028,EMP-0521,2026-05-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0062,attendance_monthly_features,AF-02902,EMP-0329,2025-10-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0063,attendance_monthly_features,AF-02907,EMP-0329,2026-03-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0064,attendance_monthly_features,AF-02740,EMP-0313,2025-11-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0065,attendance_monthly_features,AF-02739,EMP-0313,2025-10-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0066,attendance_monthly_features,AF-02906,EMP-0329,2026-02-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0067,attendance_monthly_features,AF-00789,EMP-0092,2026-04-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260430
+AN-0068,attendance_monthly_features,AF-00790,EMP-0092,2026-05-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0069,attendance_monthly_features,AF-02903,EMP-0329,2025-11-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0070,attendance_monthly_features,AF-05027,EMP-0521,2026-04-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260430
+AN-0071,attendance_monthly_features,AF-05044,EMP-0522,2026-03-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0072,attendance_monthly_features,AF-05025,EMP-0521,2026-02-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0073,attendance_monthly_features,AF-05046,EMP-0522,2026-05-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0074,attendance_monthly_features,AF-05026,EMP-0521,2026-03-01,0.833,Y,NO_ATTENDANCE,No presence recorded for the whole month,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0075,attendance_monthly_features,AF-03762,EMP-0414,2025-12-01,0.827,Y,LONG_UNPAID_ABSENCE,12 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0076,attendance_monthly_features,AF-01598,EMP-0184,2026-06-01,0.821,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0077,attendance_monthly_features,AF-03424,EMP-0382,2026-07-01,0.821,Y,LONG_UNPAID_ABSENCE,11 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0078,attendance_monthly_features,AF-02766,EMP-0314,2026-07-01,0.821,Y,LONG_UNPAID_ABSENCE,11 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0079,attendance_monthly_features,AF-05043,EMP-0522,2026-02-01,0.819,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0080,attendance_monthly_features,AF-02742,EMP-0313,2026-01-01,0.814,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0081,attendance_monthly_features,AF-03086,EMP-0346,2026-01-01,0.814,Y,LONG_UNPAID_ABSENCE,9 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0082,attendance_monthly_features,AF-01872,EMP-0218,2025-12-01,0.814,Y,LONG_UNPAID_ABSENCE,11 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0083,attendance_monthly_features,AF-07135,EMP-0683,2026-03-01,0.813,Y,LONG_UNPAID_ABSENCE,10 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0084,attendance_monthly_features,AF-02047,EMP-0244,2025-04-01,0.813,Y,LONG_UNPAID_ABSENCE,10 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0085,attendance_monthly_features,AF-06990,EMP-0664,2026-04-01,0.805,Y,LONG_UNPAID_ABSENCE,9 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260430
+AN-0086,attendance_monthly_features,AF-05439,EMP-0553,2026-01-01,0.798,Y,LONG_UNPAID_ABSENCE,10 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0087,attendance_monthly_features,AF-01106,EMP-0125,2025-10-01,0.796,Y,LONG_UNPAID_ABSENCE,10 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0088,attendance_monthly_features,AF-06818,EMP-0648,2025-10-01,0.795,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0089,attendance_monthly_features,AF-03460,EMP-0388,2026-06-01,0.794,Y,LONG_UNPAID_ABSENCE,8 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0090,attendance_monthly_features,AF-00144,EMP-0019,2025-08-01,0.791,Y,LONG_UNPAID_ABSENCE,10 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250831
+AN-0091,attendance_monthly_features,AF-00851,EMP-0096,2025-06-01,0.782,Y,LONG_UNPAID_ABSENCE,9 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250630
+AN-0092,attendance_monthly_features,AF-03206,EMP-0361,2026-05-01,0.781,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0093,attendance_monthly_features,AF-01814,EMP-0208,2026-01-01,0.775,Y,LONG_UNPAID_ABSENCE,9 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0094,attendance_monthly_features,AF-01848,EMP-0212,2025-11-01,0.771,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0095,attendance_monthly_features,AF-06369,EMP-0615,2025-10-01,0.771,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0096,attendance_monthly_features,AF-04715,EMP-0499,2025-07-01,0.771,Y,LONG_UNPAID_ABSENCE,9 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0097,attendance_monthly_features,AF-06186,EMP-0601,2025-10-01,0.768,Y,LONG_UNPAID_ABSENCE,8 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0098,attendance_monthly_features,AF-05545,EMP-0561,2025-07-01,0.766,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0099,attendance_monthly_features,AF-04599,EMP-0484,2025-07-01,0.759,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0100,attendance_monthly_features,AF-04538,EMP-0480,2026-06-01,0.756,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0101,attendance_monthly_features,AF-02322,EMP-0274,2025-04-01,0.748,Y,LONG_UNPAID_ABSENCE,9 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0102,attendance_monthly_features,AF-01115,EMP-0125,2026-07-01,0.748,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0103,attendance_monthly_features,AF-04371,EMP-0464,2025-04-01,0.743,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0104,attendance_monthly_features,AF-01667,EMP-0190,2026-03-01,0.742,Y,LONG_UNPAID_ABSENCE,9 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0105,attendance_monthly_features,AF-04228,EMP-0452,2025-11-01,0.741,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0106,attendance_monthly_features,AF-01213,EMP-0135,2025-09-01,0.739,Y,LONG_UNPAID_ABSENCE,8 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250930
+AN-0107,attendance_monthly_features,AF-04439,EMP-0469,2026-03-01,0.739,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0108,attendance_monthly_features,AF-05244,EMP-0539,2026-07-01,0.738,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0109,attendance_monthly_features,AF-02171,EMP-0254,2025-11-01,0.736,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0110,attendance_monthly_features,AF-06679,EMP-0637,2025-08-01,0.736,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250831
+AN-0111,attendance_monthly_features,AF-02951,EMP-0332,2025-05-01,0.735,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250531
+AN-0112,attendance_monthly_features,AF-07224,EMP-0698,2026-05-01,0.733,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0113,attendance_monthly_features,AF-06364,EMP-0614,2025-10-01,0.731,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0114,attendance_monthly_features,AF-05392,EMP-0549,2026-06-01,0.731,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0115,attendance_monthly_features,AF-05949,EMP-0587,2025-04-01,0.73,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0116,attendance_monthly_features,AF-00623,EMP-0071,2026-02-01,0.726,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0117,attendance_monthly_features,AF-00266,EMP-0034,2025-04-01,0.725,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0118,attendance_monthly_features,AF-00761,EMP-0089,2025-06-01,0.718,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250630
+AN-0119,attendance_monthly_features,AF-00788,EMP-0092,2026-03-01,0.717,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0120,attendance_monthly_features,AF-00065,EMP-0011,2026-02-01,0.717,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0121,attendance_monthly_features,AF-05264,EMP-0541,2026-02-01,0.717,Y,LONG_UNPAID_ABSENCE,8 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0122,attendance_monthly_features,AF-00852,EMP-0096,2025-07-01,0.715,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0123,attendance_monthly_features,AF-00458,EMP-0051,2026-08-01,0.715,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0124,attendance_monthly_features,AF-02350,EMP-0275,2026-04-01,0.713,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260430
+AN-0125,attendance_monthly_features,AF-02697,EMP-0308,2025-04-01,0.711,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0126,attendance_monthly_features,AF-00794,EMP-0092,2026-09-01,0.71,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260930
+AN-0127,attendance_monthly_features,AF-00263,EMP-0032,2026-07-01,0.71,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0128,attendance_monthly_features,AF-06413,EMP-0618,2025-06-01,0.708,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250630
+AN-0129,attendance_monthly_features,AF-07209,EMP-0695,2026-05-01,0.708,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0130,attendance_monthly_features,AF-06738,EMP-0641,2026-02-01,0.705,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0131,attendance_monthly_features,AF-01455,EMP-0157,2025-12-01,0.699,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0132,attendance_monthly_features,AF-04386,EMP-0464,2026-07-01,0.696,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0133,attendance_monthly_features,AF-06133,EMP-0598,2025-06-01,0.693,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250630
+AN-0134,attendance_monthly_features,AF-03378,EMP-0376,2025-09-01,0.689,Y,LONG_UNPAID_ABSENCE,8 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250930
+AN-0135,attendance_monthly_features,AF-00875,EMP-0097,2025-12-01,0.689,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0136,attendance_monthly_features,AF-01863,EMP-0217,2025-05-01,0.687,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250531
+AN-0137,attendance_monthly_features,AF-03671,EMP-0406,2026-03-01,0.686,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0138,attendance_monthly_features,AF-06206,EMP-0603,2025-05-01,0.684,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250531
+AN-0139,attendance_monthly_features,AF-03013,EMP-0338,2025-04-01,0.682,Y,LONG_UNPAID_ABSENCE,7 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0140,attendance_monthly_features,AF-06218,EMP-0604,2026-03-01,0.681,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0141,attendance_monthly_features,AF-07078,EMP-0675,2026-06-01,0.68,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0142,attendance_monthly_features,AF-01500,EMP-0161,2026-09-01,0.679,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260930
+AN-0143,attendance_monthly_features,AF-07051,EMP-0671,2026-01-01,0.678,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0144,attendance_monthly_features,AF-01426,EMP-0155,2025-08-01,0.675,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250831
+AN-0145,attendance_monthly_features,AF-07219,EMP-0697,2026-05-01,0.673,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0146,attendance_monthly_features,AF-01373,EMP-0149,2025-07-01,0.673,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0147,attendance_monthly_features,AF-00122,EMP-0016,2025-04-01,0.673,Y,LONG_UNPAID_ABSENCE,7 consecutive unpaid absence days,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0148,attendance_monthly_features,AF-01789,EMP-0207,2025-06-01,0.67,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250630
+AN-0149,attendance_monthly_features,AF-01504,EMP-0169,2025-07-01,0.668,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0150,attendance_monthly_features,AF-06445,EMP-0620,2025-06-01,0.662,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250630
+AN-0151,attendance_monthly_features,AF-05811,EMP-0578,2026-05-01,0.656,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0152,attendance_monthly_features,AF-07079,EMP-0675,2026-07-01,0.656,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0153,attendance_monthly_features,AF-02251,EMP-0261,2026-07-01,0.655,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0154,attendance_monthly_features,AF-03674,EMP-0406,2026-06-01,0.652,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0155,attendance_monthly_features,AF-04357,EMP-0463,2025-08-01,0.65,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250831
+AN-0156,attendance_monthly_features,AF-00668,EMP-0075,2025-05-01,0.648,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250531
+AN-0157,attendance_monthly_features,AF-05049,EMP-0522,2026-08-01,0.648,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0158,attendance_monthly_features,AF-00582,EMP-0065,2025-09-01,0.646,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250930
+AN-0159,attendance_monthly_features,AF-03767,EMP-0414,2026-05-01,0.643,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0160,attendance_monthly_features,AF-05702,EMP-0572,2026-04-01,0.64,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260430
+AN-0161,attendance_monthly_features,AF-04978,EMP-0518,2025-11-01,0.638,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0162,attendance_monthly_features,AF-07337,EMP-0743,2026-09-01,0.636,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260930
+AN-0163,attendance_monthly_features,AF-01031,EMP-0115,2025-04-01,0.634,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0164,attendance_monthly_features,AF-05385,EMP-0549,2025-11-01,0.632,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0165,attendance_monthly_features,AF-06926,EMP-0658,2025-12-01,0.628,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0166,attendance_monthly_features,AF-00532,EMP-0059,2026-01-01,0.627,Y,FREQUENT_LATE,15 late arrivals this month,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0167,attendance_monthly_features,AF-05060,EMP-0524,2026-01-01,0.627,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0168,attendance_monthly_features,AF-07273,EMP-0710,2026-06-01,0.624,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0169,attendance_monthly_features,AF-00994,EMP-0110,2025-05-01,0.62,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250531
+AN-0170,attendance_monthly_features,AF-03084,EMP-0346,2025-11-01,0.619,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0171,attendance_monthly_features,AF-01178,EMP-0133,2025-10-01,0.618,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251031
+AN-0172,attendance_monthly_features,AF-05628,EMP-0568,2026-02-01,0.617,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0173,attendance_monthly_features,AF-06665,EMP-0636,2025-08-01,0.616,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250831
+AN-0174,attendance_monthly_features,AF-06693,EMP-0638,2025-08-01,0.614,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250831
+AN-0175,attendance_monthly_features,AF-06598,EMP-0630,2025-11-01,0.614,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0176,attendance_monthly_features,AF-06659,EMP-0635,2026-04-01,0.612,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260430
+AN-0177,attendance_monthly_features,AF-00243,EMP-0031,2026-05-01,0.611,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0178,attendance_monthly_features,AF-02580,EMP-0296,2026-07-01,0.609,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0179,attendance_monthly_features,AF-06605,EMP-0630,2026-06-01,0.605,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0180,attendance_monthly_features,AF-04523,EMP-0479,2026-09-01,0.603,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260930
+AN-0181,attendance_monthly_features,AF-05196,EMP-0535,2026-07-01,0.603,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0182,attendance_monthly_features,AF-06381,EMP-0616,2025-06-01,0.598,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250630
+AN-0183,attendance_monthly_features,AF-00468,EMP-0054,2025-12-01,0.597,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0184,attendance_monthly_features,AF-06733,EMP-0641,2025-09-01,0.596,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250930
+AN-0185,attendance_monthly_features,AF-04863,EMP-0510,2026-02-01,0.595,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0186,attendance_monthly_features,AF-00760,EMP-0089,2025-05-01,0.595,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250531
+AN-0187,attendance_monthly_features,AF-04013,EMP-0433,2026-05-01,0.595,Y,FREQUENT_LATE,14 late arrivals this month,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0188,attendance_monthly_features,AF-01995,EMP-0238,2025-06-01,0.592,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250630
+AN-0189,attendance_monthly_features,AF-07162,EMP-0687,2026-03-01,0.592,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0190,attendance_monthly_features,AF-07060,EMP-0672,2026-01-01,0.591,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0191,attendance_monthly_features,AF-05799,EMP-0578,2025-05-01,0.589,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250531
+AN-0192,attendance_monthly_features,AF-02963,EMP-0332,2026-05-01,0.588,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0193,attendance_monthly_features,AF-03192,EMP-0357,2026-03-01,0.586,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0194,attendance_monthly_features,AF-06905,EMP-0656,2025-11-01,0.585,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0195,attendance_monthly_features,AF-05410,EMP-0550,2026-06-01,0.585,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0196,attendance_monthly_features,AF-05650,EMP-0569,2026-06-01,0.584,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260630
+AN-0197,attendance_monthly_features,AF-04675,EMP-0490,2025-11-01,0.584,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0198,attendance_monthly_features,AF-07130,EMP-0682,2026-02-01,0.584,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260228
+AN-0199,attendance_monthly_features,AF-06663,EMP-0635,2026-08-01,0.584,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260831
+AN-0200,attendance_monthly_features,AF-05276,EMP-0542,2025-08-01,0.583,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250831
+AN-0201,attendance_monthly_features,AF-06720,EMP-0640,2025-09-01,0.583,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250930
+AN-0202,attendance_monthly_features,AF-03835,EMP-0420,2026-01-01,0.582,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260131
+AN-0203,attendance_monthly_features,AF-05091,EMP-0529,2025-08-01,0.581,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250831
+AN-0204,attendance_monthly_features,AF-06986,EMP-0664,2025-12-01,0.581,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0205,attendance_monthly_features,AF-04834,EMP-0508,2025-07-01,0.581,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0206,attendance_monthly_features,AF-00333,EMP-0040,2026-05-01,0.578,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0207,attendance_monthly_features,AF-06904,EMP-0655,2026-07-01,0.578,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0208,attendance_monthly_features,AF-04614,EMP-0485,2025-04-01,0.577,Y,FREQUENT_LATE,19 late arrivals this month,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0209,attendance_monthly_features,AF-00702,EMP-0079,2026-07-01,0.576,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0210,attendance_monthly_features,AF-05100,EMP-0529,2026-05-01,0.576,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0211,attendance_monthly_features,AF-00649,EMP-0074,2025-04-01,0.576,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250430
+AN-0212,attendance_monthly_features,AF-07304,EMP-0720,2026-07-01,0.575,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260731
+AN-0213,attendance_monthly_features,AF-00328,EMP-0040,2025-12-01,0.574,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251231
+AN-0214,attendance_monthly_features,AF-03931,EMP-0428,2025-07-01,0.573,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0215,attendance_monthly_features,AF-06604,EMP-0630,2026-05-01,0.572,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260531
+AN-0216,attendance_monthly_features,AF-06521,EMP-0625,2025-07-01,0.572,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0217,attendance_monthly_features,AF-06566,EMP-0628,2025-07-01,0.571,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250731
+AN-0218,attendance_monthly_features,AF-02135,EMP-0249,2025-11-01,0.571,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20251130
+AN-0219,attendance_monthly_features,AF-02925,EMP-0330,2026-03-01,0.57,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260331
+AN-0220,attendance_monthly_features,AF-00872,EMP-0097,2025-09-01,0.567,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20250930
+AN-0221,attendance_monthly_features,AF-03401,EMP-0377,2026-02-01,0.566,Y,PATTERN_SHIFT,Attendance pattern differs sharply from peers and own history,,iforest-attendance-0.1,2026-10-01 02:00,20260228

@@ -1,0 +1,429 @@
+dashboard_title: Attendance & Leave Analysis
+description: null
+css: ''
+slug: null
+certified_by: ''
+certification_details: ''
+published: false
+uuid: 1b0a87b3-5197-49be-9bda-868396e33459
+position:
+  CHART-explore-11-1:
+    children: []
+    id: CHART-explore-11-1
+    meta:
+      chartId: 11
+      height: 52
+      sliceName: Monthly Attendance Trend
+      uuid: 8cc91658-8657-4170-8fd9-996ef3daf1b2
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-F0jubHaQjQsfigpAHHDGj
+    type: CHART
+  CHART-explore-12-1:
+    children: []
+    id: CHART-explore-12-1
+    meta:
+      chartId: 12
+      height: 52
+      sliceName: Department Attendance Rate (%)
+      uuid: d00076ed-a7e4-4318-b5d8-18ed0324ae00
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-zRgrJlNpRI0mtTF-ycS6G
+    type: CHART
+  CHART-explore-13-1:
+    children: []
+    id: CHART-explore-13-1
+    meta:
+      chartId: 13
+      height: 53
+      sliceName: Leave Requests by Type and Status
+      uuid: c71ff864-1493-4c4c-a43a-6538405a243b
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-eqOEWj5saShG1u6Z9dLeW
+    type: CHART
+  CHART-explore-14-1:
+    children: []
+    id: CHART-explore-14-1
+    meta:
+      chartId: 14
+      height: 51
+      sliceName: Monthly Late Arrivals Trend
+      uuid: d96a45e9-c490-4ccc-8d7a-4d7726a56c21
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-h6kH9EQaDHbAIjGI8kMlr
+    type: CHART
+  CHART-explore-15-1:
+    children: []
+    id: CHART-explore-15-1
+    meta:
+      chartId: 15
+      height: 52
+      sliceName: Monthly Attendance Rate vs 3-Month Rolling Average
+      uuid: 35d9e6ab-db95-49c7-b3f4-4e3552a8cb87
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-F0jubHaQjQsfigpAHHDGj
+    type: CHART
+  CHART-explore-16-1:
+    children: []
+    id: CHART-explore-16-1
+    meta:
+      chartId: 16
+      height: 52
+      sliceName: Attendance Rate by Weekday (%)
+      uuid: 01919dba-1bc2-418d-9182-3bfece9331f7
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-zRgrJlNpRI0mtTF-ycS6G
+    type: CHART
+  CHART-explore-17-1:
+    children: []
+    id: CHART-explore-17-1
+    meta:
+      chartId: 17
+      height: 51
+      sliceName: Approved Leave Days by Type
+      uuid: bb954830-10da-4c92-922e-1914eec19a95
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-h6kH9EQaDHbAIjGI8kMlr
+    type: CHART
+  CHART-explore-18-1:
+    children: []
+    id: CHART-explore-18-1
+    meta:
+      chartId: 18
+      height: 50
+      sliceName: Attendance Anomaly Flags
+      uuid: db7e09aa-7b2f-4b45-8d10-db1e53ad1bd0
+      width: 12
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-KqNZq8WZm4BKieMGDqMh1
+    type: CHART
+  DASHBOARD_VERSION_KEY: v2
+  GRID_ID:
+    children:
+    - ROW-F0jubHaQjQsfigpAHHDGj
+    - ROW-zRgrJlNpRI0mtTF-ycS6G
+    - ROW-h6kH9EQaDHbAIjGI8kMlr
+    - ROW-eqOEWj5saShG1u6Z9dLeW
+    - ROW-KqNZq8WZm4BKieMGDqMh1
+    id: GRID_ID
+    parents:
+    - ROOT_ID
+    type: GRID
+  HEADER_ID:
+    id: HEADER_ID
+    meta:
+      text: Attendance & Leave Analysis
+    type: HEADER
+  MARKDOWN-g8abZES-jBIBQ1lgso6-8:
+    children: []
+    id: MARKDOWN-g8abZES-jBIBQ1lgso6-8
+    meta:
+      code: "### Attendance & Leave \u2014 Key Takeaways\r\n\r\n- **Attendance trend:**\
+        \ Monthly attendance rate changed from 94.40% in April 2025 to 93.25% in May\
+        \ 2025, then rose to 95.35% in July 2025. Continue monitoring monthly changes\
+        \ before concluding that a sustained trend exists.\r\n- **Department comparison:**\
+        \ Department attendance rates in the current dashboard range from 90.60% to\
+        \ 94.84%. HR should review the lower-performing departments and investigate\
+        \ possible operational causes.\r\n- **Leave patterns:** Approved leave requests\
+        \ total 3,087, compared with 209 rejected, 109 cancelled and 34 pending requests.\
+        \ HR can review pending requests and plan staffing using leave demand.\r\n\
+        - **Anomaly review:** Flagged records are signals for investigation, not proof\
+        \ of employee misconduct. Validate unusual attendance patterns with source\
+        \ records before taking action."
+      height: 53
+      width: 6
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-eqOEWj5saShG1u6Z9dLeW
+    type: MARKDOWN
+  ROOT_ID:
+    children:
+    - GRID_ID
+    id: ROOT_ID
+    type: ROOT
+  ROW-F0jubHaQjQsfigpAHHDGj:
+    children:
+    - CHART-explore-11-1
+    - CHART-explore-15-1
+    id: ROW-F0jubHaQjQsfigpAHHDGj
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-KqNZq8WZm4BKieMGDqMh1:
+    children:
+    - CHART-explore-18-1
+    id: ROW-KqNZq8WZm4BKieMGDqMh1
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-eqOEWj5saShG1u6Z9dLeW:
+    children:
+    - CHART-explore-13-1
+    - MARKDOWN-g8abZES-jBIBQ1lgso6-8
+    id: ROW-eqOEWj5saShG1u6Z9dLeW
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-h6kH9EQaDHbAIjGI8kMlr:
+    children:
+    - CHART-explore-17-1
+    - CHART-explore-14-1
+    id: ROW-h6kH9EQaDHbAIjGI8kMlr
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+  ROW-zRgrJlNpRI0mtTF-ycS6G:
+    children:
+    - CHART-explore-12-1
+    - CHART-explore-16-1
+    id: ROW-zRgrJlNpRI0mtTF-ycS6G
+    meta:
+      background: BACKGROUND_TRANSPARENT
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    type: ROW
+metadata:
+  chart_configuration:
+    '11':
+      id: 11
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        - 17
+        - 18
+    '12':
+      id: 12
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 11
+        - 13
+        - 14
+        - 15
+        - 16
+        - 17
+        - 18
+    '13':
+      id: 13
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 11
+        - 12
+        - 14
+        - 15
+        - 16
+        - 17
+        - 18
+    '14':
+      id: 14
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 11
+        - 12
+        - 13
+        - 15
+        - 16
+        - 17
+        - 18
+    '15':
+      id: 15
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 11
+        - 12
+        - 13
+        - 14
+        - 16
+        - 17
+        - 18
+    '16':
+      id: 16
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 17
+        - 18
+    '17':
+      id: 17
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        - 18
+    '18':
+      id: 18
+      crossFilters:
+        scope: global
+        chartsInScope:
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        - 17
+  global_chart_configuration:
+    scope:
+      rootPath:
+      - ROOT_ID
+      excluded: []
+    chartsInScope:
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+  native_filter_configuration:
+  - cascadeParentIds: []
+    controlValues:
+      creatable: true
+      defaultToFirstItem: false
+      enableEmptyFilter: false
+      inverseSelection: false
+      multiSelect: true
+      searchAllOptions: false
+      sortAscending: true
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    description: ''
+    filterType: filter_select
+    id: NATIVE_FILTER-paY7WGD4KUFwIknN5zUJ-
+    name: Month / Year
+    scope:
+      excluded: []
+      rootPath:
+      - ROOT_ID
+    sortMetric: null
+    targets:
+    - column:
+        name: total_headcount
+      datasetUuid: b045ef3a-32bb-430a-8ed2-e2c37a6fb6a5
+    type: NATIVE_FILTER
+    chartsInScope:
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    tabsInScope: []
+  - cascadeParentIds: []
+    controlValues:
+      creatable: true
+      defaultToFirstItem: false
+      enableEmptyFilter: false
+      inverseSelection: false
+      multiSelect: true
+      searchAllOptions: false
+      sortAscending: true
+    defaultDataMask:
+      extraFormData: {}
+      filterState: {}
+      ownState: {}
+    description: ''
+    filterType: filter_select
+    id: NATIVE_FILTER-_fc9y9ylluWu0d7zazwbi
+    name: Department
+    scope:
+      excluded:
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      rootPath:
+      - ROOT_ID
+    sortMetric: null
+    targets:
+    - column:
+        name: department_name
+      datasetUuid: b2f2bce6-6f0a-4521-81b1-3c56a3131119
+    type: NATIVE_FILTER
+    chartsInScope: []
+    tabsInScope: []
+  chart_customization_config: []
+  map_label_colors:
+    SUM(attendance_rate_pct): '#1FA8C9'
+    SUM(present_days): '#1FA8C9'
+    SUM(total_leave_days): '#1FA8C9'
+    SUM(total_late_arrivals): '#1f77b4'
+    AVG(attendance_rate_pct): '#1FA8C9'
+    AVG(rolling_3m_attendance_pct): '#454E7C'
+    Approved: '#3366cc'
+    Rejected: '#dc3912'
+    Cancelled: '#ff9900'
+    Pending: '#109618'
+  color_scheme: ''
+  refresh_frequency: 0
+  color_scheme_domain: []
+  expanded_slices: {}
+  label_colors: {}
+  shared_label_colors:
+  - AVG(attendance_rate_pct)
+  timed_refresh_immune_slices: []
+  cross_filters_enabled: true
+  default_filters: '{}'
+theme_uuid: null
+version: 1.0.0

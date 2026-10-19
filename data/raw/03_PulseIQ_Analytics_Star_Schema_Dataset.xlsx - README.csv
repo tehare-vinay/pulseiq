@@ -1,0 +1,109 @@
+,,,,,
+,PulseIQ Analytics Dataset,,,,
+,WorkforceOS Section 3 - Data Analysts: Workforce Analytics & BI Dashboard   |   Zenith Nova Technologies (fictional)   |   Cut-off 30 Sep 2026,,,,
+,,,,,
+,About this dataset,,,,
+,,,,,
+,"Everything in this file is FICTIONAL. The company ""Zenith Nova Technologies Pvt Ltd"", its people, clients, vendors, e-mails and numbers were generated for training. Any resemblance to real persons or businesses is accidental. Tax, PF, ESI and professional-tax rules are SAMPLE values for learning; never use them for real payroll.",,,,
+,,,,,
+,"This workbook is one of three that were built from ONE shared simulated company (the ""master dataset""). The same employee ids, departments, payroll runs and ledger numbers appear in all three workbooks, so work done by the Python, AI/ML and Data teams lines up row for row.",,,,
+,,,,,
+,What is in this workbook,,,,
+,,,,,
+,"A ready-made star-schema warehouse extract for the Data team: calendar, employee (with history), department, role and other dimensions; payroll, attendance, leave, headcount, ledger, invoice, expense and task facts; AI feeds (anomalies, attrition risk, forecasts); governance sheets (metric dictionary, data contracts, quality checks); budgets and targets; and an answer key. The facts contain a small number of deliberately planted problems so that your data-quality checks have something to find.",,,,
+,,,,,
+,Headline numbers,,,,
+,,,,,
+,Item,,Value,,
+,Employees / history versions,,"745 employees, 1,606 dimension versions (SCD Type 2)",,
+,Payroll fact,,"7,344 rows (7,340 clean + 4 planted bad rows), 18 months",,
+,Attendance fact,,"7,343 employee-month rows",,
+,Ledger fact,,"6,784 journal lines",,
+,Invoices / expenses,,"743 invoices, 501 expense bills",,
+,Tasks (sample board feed),,"28,868 tasks, 16 teams, 38 two-week sprints",,
+,Headcount history,,81 months by department (Jan 2020 to Sep 2026),,
+,Metrics defined,,28 metrics in metric_dictionary,,
+,Quality checks,,14 checks in dq_checks_catalog,,
+,Planted problems,,"11 (listed in dq_known_issues, to open after your own checks)",,
+,,,,,
+,How the tables join (star schema),,,,
+,,,,,
+,Fact,,Joins to dimension,,Keys
+,fact_payroll,,"dim_employee, dim_date, dim_department, dim_role",,"employee_key (version valid at period end), date_key = month end, department_id, role_id"
+,fact_attendance_monthly,,"dim_employee, dim_date, dim_department",,"employee_key, date_key = month end"
+,fact_leave,,"dim_employee, dim_leave_type, dim_date",,"employee_key, leave_type_code, start_date_key / end_date_key"
+,fact_headcount_monthly,,"dim_department, dim_date",,"department_id, date_key = month end"
+,fact_ledger,,"dim_account, dim_department, dim_date",,"account_code, cost_center_department_id, date_key"
+,fact_invoice / fact_invoice_payment,,"dim_client, dim_account, dim_date",,"client_id, service_line_account, invoice_date_key / payment_date_key"
+,fact_expense,,"dim_vendor, dim_account, dim_department, dim_date",,"vendor_id, category_account, department_id, expense_date_key"
+,fact_task,,"dim_team, dim_sprint, dim_employee",,"team_id, sprint_id, assignee_employee_id"
+,fact_anomaly / fact_attrition_risk / fact_forecast,,"dim_employee, dim_department, dim_date",,"employee_id (employee_key for risk), department_id, date keys"
+,,,,,
+,Read before you start,,,,
+,,,,,
+,•  Use employee_key (not employee_id) to join facts to dim_employee so that history is respected: a person who moved department in June must appear in the old department before June.,,,,
+,•  The sheets reconciliation_answer_key and reference_summary_dept_month contain the CORRECT monthly totals computed from clean data. Use them to test your pipeline. Your own totals from the fact sheets will differ in the months touched by planted problems until you clean them.,,,,
+,"•  The sheet dq_known_issues lists every planted problem with record ids. Write your checks first (see dq_checks_catalog for ideas), then compare.",,,,
+,"•  fact_task, fact_anomaly, fact_attrition_risk and fact_forecast are SAMPLE feeds that stand in for the Full Stack task board and the AI services until they are live. Their contracts are in data_contracts. In Task 19 you replace them with live APIs.",,,,
+,•  Show aggregates only. The metric dictionary gives a minimum group size; hide smaller groups (a group of one reveals one person pay).,,,,
+,"•  Salary data is sensitive; it appears only in fact_payroll, so you can practise column- and row-level access control.",,,,
+,•  Dates: date_key is an integer YYYYMMDD. dim_date covers 2020-2026 with Indian financial year and fiscal quarter (Q1 = April to June).,,,,
+,,,,,
+,Which sheets help with which task (20-task roadmap),,,,
+,,,,,
+,Task,Name,,,Sheets to use
+,Task 1,ETL pipeline,,,Treat the fact sheets as the raw exports; data_contracts for validation rules
+,Task 2,Warehouse star schema,,,All dim_ and fact_ sheets; dim_employee shows SCD Type 2
+,Task 3,Dashboard design & demographics,,,"dim_employee, fact_headcount_monthly, dim_department, dim_location, dim_role"
+,Task 4,Attendance trends,,,"fact_attendance_monthly, dim_date, fact_anomaly (sample AI flags)"
+,Task 5,Payroll cost dashboard,,,"fact_payroll, dim_department, dim_role; check against reconciliation_answer_key"
+,Task 6,Overtime & leave impact,,,"fact_payroll (overtime_pay, lop_days), fact_leave, fact_attendance_monthly"
+,Task 7,Ledger analytics,,,"fact_ledger, dim_account (P&L and expense trends)"
+,Task 8,Invoice & cash flow,,,"fact_invoice, fact_invoice_payment, fact_expense, dim_client"
+,Task 9,Attrition analytics,,,"fact_headcount_monthly, dim_employee, fact_attrition_risk (predicted, label it as such)"
+,Task 10,Team productivity,,,"fact_task, dim_team, dim_sprint"
+,Task 11,Cross-department view,,,reference_summary_dept_month to validate your combined table
+,Task 12,Data quality monitoring,,,"dq_checks_catalog, then dq_known_issues to see what you missed"
+,Task 13,Anomaly reporting,,,fact_anomaly
+,Task 14,Predictive visualisation,,,"fact_forecast, fact_attrition_risk, fact_headcount_monthly (actuals for forecast vs actual)"
+,Task 15,Automated reports,,,"Payroll, finance and people facts with budget_payroll_dept_month"
+,Task 16,Deployment,,,Load all sheets into the hosted warehouse
+,Task 17,Custom KPI builder,,,"metric_dictionary, kpi_targets"
+,Task 18,Executive Company Health,,,Headline metrics from every fact; targets from kpi_targets
+,Task 19,Drill-down & analytics API,,,"dim_employee (hierarchy via manager_id), all facts; roles come from the Python dataset (users sheet)"
+,Task 20,Final integration & lineage,,,"metric_dictionary, data_contracts, dq_checks_catalog for the lineage document"
+,,,,,
+,Sheet index (click a sheet name to jump),,,,
+,Sheet,Group,Rows,Columns,What it contains
+,metric_dictionary,Governance,28,12,Official definition of every metric (28 metrics)
+,data_contracts,Governance,42,6,Column-level contracts for the AI and task-board feeds
+,dq_checks_catalog,Governance,14,9,"14 data-quality checks with logic, severity, tolerance and owner"
+,dim_date,Dimensions,"2,557",18,"Calendar 2020-2026 with financial year, fiscal quarter and holiday flags"
+,dim_employee,Dimensions,"1,606",21,Employee dimension with history (SCD Type 2): valid_from / valid_to / is_current
+,dim_department,Dimensions,11,5,Departments and cost centres
+,dim_role,Dimensions,58,10,"Roles, levels and pay bands"
+,dim_location,Dimensions,9,4,Work locations with city tier
+,dim_leave_type,Dimensions,6,8,Leave types
+,dim_account,Dimensions,47,8,Chart of accounts
+,dim_client,Dimensions,28,14,Clients
+,dim_vendor,Dimensions,30,7,Vendors
+,dim_team,Dimensions,16,7,16 product and delivery teams
+,dim_sprint,Dimensions,38,6,38 two-week sprints
+,fact_payroll,Facts,"7,344",33,Grain: one row per employee per payroll month (contains planted issues)
+,fact_attendance_monthly,Facts,"7,343",16,Grain: one row per employee per month (contains planted issues)
+,fact_leave,Facts,"3,441",14,Grain: one row per leave request (contains planted issues)
+,fact_headcount_monthly,Facts,891,11,"Grain: department x month, Jan 2020 to Sep 2026"
+,fact_ledger,Facts,"6,784",13,Grain: one row per journal line (contains planted issues)
+,fact_invoice,Facts,743,20,Grain: one row per invoice (contains planted issues)
+,fact_invoice_payment,Facts,709,9,Grain: one row per payment received
+,fact_expense,Facts,501,20,Grain: one row per expense bill (contains planted issues)
+,fact_task,Facts,"28,868",16,Grain: one row per task (sample feed from the task board; contains planted issues)
+,fact_anomaly,Facts,405,13,AI anomaly results (sample feed)
+,fact_attrition_risk,Facts,430,13,AI attrition risk by employee (sample feed; contains planted issues)
+,fact_forecast,Facts,72,11,AI forecasts (sample feed)
+,budget_payroll_dept_month,Targets,198,3,Payroll budget by department and month (for budget-vs-actual work)
+,kpi_targets,Targets,180,6,Targets by department and month
+,reconciliation_answer_key,Answer key,18,12,Correct monthly totals from CLEAN data: use to validate your pipeline
+,reference_summary_dept_month,Answer key,198,19,"Correct department x month summary (cost, headcount, attendance, tasks) from CLEAN data"
+,dq_known_issues,Answer key,11,7,List of every planted data problem (open only after your own checks)
+,data_dictionary,Reference,371,8,"Every column in every sheet: type, meaning, null count, distinct values, example"

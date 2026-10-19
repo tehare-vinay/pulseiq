@@ -1,0 +1,59 @@
+﻿
+services:
+  postgres:
+    image: postgres:16
+    container_name: pulseiq_warehouse_db
+    environment:
+      POSTGRES_DB: pulseiq_warehouse
+      POSTGRES_USER: pulseiq_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pulseiq_local_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/app/sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulseiq_user -d pulseiq_warehouse"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  etl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./documentation:/app/documentation
+      - ./sql:/app/sql:ro
+    command: ["python", "-m", "src.etl.etl_pipeline"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  superset:
+    image: pulseiq-superset:latest
+    container_name: pulseiq_superset
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+    volumes:
+      - ./superset_config.py:/app/pythonpath/superset_config.py:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      /bin/sh -c "superset db upgrade &&
+      (superset fab create-admin --username admin --firstname PulseIQ
+      --lastname Admin --email admin@pulseiq.local --password PulseIQ_Admin_2026!
+      || true) &&
+      superset init &&
+      /usr/bin/run-server.sh"
+
+volumes:
+  postgres_data:
+
+  

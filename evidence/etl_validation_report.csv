@@ -1,0 +1,35 @@
+run_id,file_name,status,issue
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - budget_payroll_dept_month.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - data_contracts.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - data_dictionary.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_account.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_client.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_date.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_department.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_employee.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_employee.csv,REVIEW,valid_to: 441 nonblank invalid date value(s)
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_leave_type.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_location.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_role.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_sprint.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_team.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_vendor.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dq_checks_catalog.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dq_known_issues.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_anomaly.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_attendance_monthly.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_attrition_risk.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_expense.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_forecast.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_headcount_monthly.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_invoice.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_invoice_payment.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_leave.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_leave.csv,REVIEW,leave end_date before start_date: 2 row(s)
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_ledger.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_payroll.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_task.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - kpi_targets.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - metric_dictionary.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - reconciliation_answer_key.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.
+20261019_081221,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - reference_summary_dept_month.csv,REVIEW,Pandera is not installed; required Pandera validation could not run. Install dependencies from requirements.txt.

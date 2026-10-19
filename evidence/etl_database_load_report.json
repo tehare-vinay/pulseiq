@@ -1,0 +1,5 @@
+{
+  "run_id": "20261019_081221",
+  "status": "SKIPPED",
+  "details": "Set PULSEIQ_PGDATABASE, PULSEIQ_PGUSER and PULSEIQ_PGPASSWORD; database load not claimed."
+}

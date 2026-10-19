@@ -207,7 +207,7 @@ def standardize_dates(df):
         try:
             parsed = pd.to_datetime(original, errors="coerce", format="mixed")
         except (TypeError, ValueError):
-            parsed = pd.to_datetime(original, errors="coerce")
+            parsed = pd.to_datetime(original, errors="coerce", format="mixed")
         invalid = nonblank & parsed.isna()
         if invalid.any():
             warnings.append(f"{col}: {int(invalid.sum())} nonblank value(s) could not be parsed; source values preserved")

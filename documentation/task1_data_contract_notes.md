@@ -64,3 +64,10 @@ The following rules are transcribed from the official source. They are documenta
 ## Scope and limitations
 
 This register documents every row in the official contract file. It does not mean that tables absent from the contract file have column-level contracts, or that all documented rules have been enforced.
+
+## Task 1 validation review
+
+- Employee history: `dim_employee.csv` reports 441 nonblank invalid `valid_to` date values. These values require source/reference review; they are not automatically guessed or silently corrected.
+- Leave dates: `fact_leave.csv` reports 2 rows where `end_date` precedes `start_date`. These rows are quarantined with reason `leave_end_date_before_start_date` and require business review.
+- Unexpected columns: warn and record them for review; do not silently discard source columns. Update the data contract before adopting a new column.
+- Reconciliation: check that input rows equal passed rows plus quarantined rows for each table. The latest reported run has 32 tables checked and zero reconciliation failures.

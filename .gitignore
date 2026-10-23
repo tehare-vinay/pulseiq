@@ -68,3 +68,12 @@ __pycache__/
 venv/
 __pycache__/
 .env
+
+# Local datasets and generated logs
+data/raw/
+data/clean/
+data/rejected/
+logs/
+docker-compose.backup.yml
+README_TASK2_PATCH.md
+*.backup.sql

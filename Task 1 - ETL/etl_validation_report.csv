@@ -1,3 +1,0 @@
-run_id,file_name,status,issue
-20261016_032452,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_employee.csv,REVIEW,valid_to: 441 nonblank invalid date value(s)
-20261016_032452,03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_leave.csv,REVIEW,leave end_date before start_date: 2 row(s)

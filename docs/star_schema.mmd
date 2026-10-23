@@ -1,0 +1,46 @@
+
+flowchart TB
+    subgraph DIM["DIMENSION TABLES"]
+        DE["dim_employee<br/>PK: employee_key<br/>employee_id<br/>department_id, role_id<br/>valid_from, valid_to<br/>SCD Type 2 history"]
+        DD["dim_department<br/>PK: department_id"]
+        DR["dim_role<br/>PK: role_id"]
+        DT["dim_date<br/>PK: date_key<br/>calendar_date"]
+        DLT["dim_leave_type<br/>PK: leave_type_id"]
+    end
+
+    subgraph FACT["FACT TABLES"]
+        FP[("fact_payroll<br/>PK: payroll_item_id<br/>FK: employee_key<br/>FK: date_key<br/>Grain: one payroll item")]
+        FA[("fact_attendance_monthly<br/>PK: attendance_fact_id<br/>FK: employee_key<br/>period_end_date<br/>Grain: one employee-month record")]
+        FL[("fact_leave<br/>PK: leave_request_id<br/>FK: employee_key<br/>FK: leave_type_id<br/>Grain: one leave request")]
+        FH[("fact_headcount_monthly<br/>PK: date_key + department_id<br/>Grain: department-date snapshot")]
+    end
+
+    DE -->|"employee_key"| FP
+    DT -->|"date_key"| FP
+
+    DE -->|"employee_key"| FA
+
+    DE -->|"employee_key"| FL
+    DLT -->|"leave_type_id"| FL
+
+    DT -->|"date_key"| FH
+    DD -->|"department_id"| FH
+
+    DE -.->|"department_id attribute; no FK constraint"| DD
+    DE -.->|"role_id attribute; no FK constraint"| DR
+
+    RULE["BUSINESS RULE<br/>Use employee_key for historical employee joins,<br/>not employee_id.<br/>June payroll stays linked to the June employee version,<br/>even if the employee transfers in July."]
+
+    RULE -.-> DE
+
+    UNKNOWN["SOURCE EXCEPTIONS<br/>Two payroll rows use employee_key = -1.<br/>Keep them documented as unresolved source records;<br/>do not guess employee mappings."]
+
+    UNKNOWN -.-> FP
+
+    classDef dimension fill:#eaf2ff,stroke:#3264a8,color:#142b4d
+    classDef fact fill:#e8f8f0,stroke:#23845b,color:#123d2b
+    classDef note fill:#fff4d6,stroke:#b78320,color:#4a3510
+
+    class DE,DD,DR,DT,DLT dimension
+    class FP,FA,FL,FH fact
+    class RULE,UNKNOWN note

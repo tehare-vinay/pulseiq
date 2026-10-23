@@ -1,4 +1,4 @@
-"""Load the Task 1 clean CSV outputs into the PulseIQ PostgreSQL warehouse.
+﻿"""Load the Task 1 clean CSV outputs into the PulseIQ PostgreSQL warehouse.
 
 Safe to rerun: each table uses its declared primary key with ON CONFLICT DO UPDATE.
 The source/raw CSV files are never changed. Extra source fields are preserved in JSONB.
@@ -14,7 +14,7 @@ import pandas as pd
 import psycopg2
 from psycopg2.extras import execute_values
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 CLEAN_DIR = Path(os.getenv("PULSEIQ_CLEAN_DIR", str(ROOT / "data" / "clean")))
 PREFIX = "03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - "
 
@@ -110,9 +110,18 @@ def to_python(value, target_col):
     if target_col in {
         "gross_pay", "net_pay", "employer_cost", "overtime_pay",
         "overtime_hours", "scheduled_days", "present_days",
-        "unpaid_absence_days"
+        "unpaid_absence_days", "money_at_risk", "deductions",
+        "amount", "invoice_amount", "paid_amount", "outstanding_amount",
+        "total_amount", "gross_amount", "net_amount", "employer_cost_amount"
     }:
-        return float(value)
+        # Some source exports format numeric amounts as currency strings, e.g. "$47,844.46".
+        # Remove display-only currency symbols/separators before numeric conversion.
+        numeric_text = str(value).strip().replace(",", "").replace("$", "")
+        if numeric_text.startswith("(") and numeric_text.endswith(")"):
+            numeric_text = "-" + numeric_text[1:-1].strip()
+        if numeric_text.startswith("â‚¹"):
+            numeric_text = numeric_text[1:].strip()
+        return float(numeric_text)
 
     return str(value) if not isinstance(value, (int, float)) else value
 
@@ -217,3 +226,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -29,6 +29,12 @@ services:
       - ./documentation:/app/documentation
       - ./sql:/app/sql:ro
     command: ["python", "-m", "src.etl.etl_pipeline"]
+    environment:
+      PULSEIQ_PGDATABASE: ${POSTGRES_DB}
+      PULSEIQ_PGUSER: ${POSTGRES_USER}
+      PULSEIQ_PGPASSWORD: ${POSTGRES_PASSWORD}
+      PULSEIQ_PGHOST: postgres
+      PULSEIQ_PGPORT: "5432"
     depends_on:
       postgres:
         condition: service_healthy

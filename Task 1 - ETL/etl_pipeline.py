@@ -14,7 +14,15 @@ except ImportError:
         pa = None
 
 # PulseIQ Task 1: repeatable ETL, conservative cleaning, validation and logs.
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+def find_project_root(script_path):
+    for candidate in [script_path.parent, *script_path.parents]:
+        if (candidate / "data" / "raw").is_dir():
+            return candidate
+        if (candidate / "Clean Data").is_dir() and (candidate / "Task 1 - ETL").is_dir():
+            return candidate
+    return script_path.resolve().parent
+
+PROJECT_ROOT = find_project_root(Path(__file__).resolve())
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
 CLEAN_DIR = PROJECT_ROOT / "data" / "clean"
 REJECTED_DIR = PROJECT_ROOT / "data" / "rejected"
@@ -30,9 +38,12 @@ for folder in (CLEAN_DIR, REJECTED_DIR, LOG_DIR, DOC_DIR):
 
 
 def discover_files():
-    """Use only official PulseIQ exports; ignore README and duplicate payroll export."""
+    """Use official raw exports; selected-file ZIP fallback supports package validation."""
+    source_dir = RAW_DIR
+    if not source_dir.is_dir() or not list(source_dir.glob("*.csv")):
+        source_dir = PROJECT_ROOT / "Clean Data"
     files = []
-    for path in sorted(RAW_DIR.glob("*.csv")):
+    for path in sorted(source_dir.glob("*.csv")):
         name = path.name.lower()
         if not name.startswith(DATASET_PREFIX.lower()):
             continue
@@ -40,6 +51,103 @@ def discover_files():
             continue
         files.append(path)
     return files
+
+
+def find_contract_file(files):
+    for path in files:
+        if path.name.lower().endswith("data_contracts.csv"):
+            return path
+    for folder in (RAW_DIR, PROJECT_ROOT / "Clean Data", PROJECT_ROOT / "data" / "contracts"):
+        if folder.exists():
+            matches = list(folder.glob("*data_contracts.csv"))
+            if len(matches) == 1:
+                return matches[0]
+    return None
+
+
+def contract_table_name(feed):
+    import re
+    match = re.search(r"\(([^()]+)\)\s*$", str(feed))
+    return match.group(1).strip().lower() + ".csv" if match else None
+
+
+def validate_contract(df, filename, contracts):
+    """Check required contract columns and nullable=no rules where contract rows exist."""
+    if contracts is None or contracts.empty:
+        return ["Official data contract missing or empty"]
+    rules = contracts.copy()
+    rules.columns = [str(c).strip().lower() for c in rules.columns]
+    rules["_table"] = rules["feed"].map(contract_table_name)
+    matched = rules[rules["_table"] == filename.lower()]
+    if matched.empty:
+        return []  # The contract file covers only explicitly listed feeds.
+    issues = []
+    expected = set(matched["column_name"].astype(str).str.strip().str.lower())
+    actual = set(map(str.lower, df.columns))
+    missing = sorted(expected - actual)
+    if missing:
+        issues.append("Missing contract columns: " + ", ".join(missing))
+    for _, rule in matched.iterrows():
+        col = str(rule["column_name"]).strip().lower()
+        nullable = str(rule.get("nullable", "yes")).strip().lower() in {"yes", "y", "true", "1"}
+        if col in df.columns and not nullable:
+            blank = df[col].isna() | df[col].astype("string").str.strip().eq("")
+            count = int(blank.sum())
+            if count:
+                issues.append(f"{col}: {count} row(s) violate nullable=no")
+    return issues
+
+
+def write_contract_notes(contracts):
+    DOC_DIR.mkdir(parents=True, exist_ok=True)
+    if contracts is None or contracts.empty:
+        body = "Contract file was not found; column-level contract validation could not run."
+    else:
+        feeds = contracts["feed"].dropna().drop_duplicates().astype(str).tolist()
+        body = (f"Contract rows: {len(contracts)}\nContract feeds: {len(feeds)}\n\n" +
+                "Covered feeds:\n" + "\n".join(f"- {x}" for x in feeds) +
+                "\n\nCoverage note: only feeds explicitly present in data_contracts.csv receive column-level contract checks. Other tables still receive ETL business-rule checks and should have contract rows added in a future contract revision.\n")
+    (DOC_DIR / "task1_data_contract_notes.md").write_text(
+        "# Task 1 — Data contract notes\n\nSource: official PulseIQ data_contracts.csv.\n\n" + body +
+        "\n\nRaw source files are read-only. Exact duplicate rows are quarantined with a written reason; repeated business keys are not automatically removed.\n",
+        encoding="utf-8")
+
+
+def load_postgres_idempotently(clean_files):
+    """Transactional truncate/reload into TEXT staging tables; reruns do not append duplicates."""
+    import os, re
+    db_name = os.getenv("PULSEIQ_PGDATABASE") or os.getenv("PULSEIQ_DATABASE") or os.getenv("POSTGRES_DB")
+    db_user = os.getenv("PULSEIQ_PGUSER") or os.getenv("PULSEIQ_USER") or os.getenv("POSTGRES_USER")
+    db_password = os.getenv("PULSEIQ_PGPASSWORD") or os.getenv("PULSEIQ_PASSWORD") or os.getenv("POSTGRES_PASSWORD")
+    if not all([db_name, db_user, db_password]):
+        return {"status": "SKIPPED", "details": "Database load skipped: required database settings are missing."}
+    try:
+        import psycopg2
+        from psycopg2 import sql
+        from psycopg2.extras import execute_batch
+        conn = psycopg2.connect(host=os.getenv("PULSEIQ_PGHOST", "localhost"), port=int(os.getenv("PULSEIQ_PGPORT", "5432")), dbname=db_name, user=db_user, password=db_password)
+        loaded = []
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    for csv_path in clean_files:
+                        df = pd.read_csv(csv_path, low_memory=False)
+                        name = csv_path.name
+                        if name.lower().startswith(DATASET_PREFIX.lower()): name = name[len(DATASET_PREFIX):]
+                        table = re.sub(r"[^a-z0-9_]+", "_", Path(name).stem.lower()).strip("_")
+                        columns = [re.sub(r"[^a-zA-Z0-9_]+", "_", str(c)).strip("_").lower() for c in df.columns]
+                        if len(columns) != len(set(columns)): raise ValueError(f"SQL column-name collision in {csv_path.name}")
+                        cur.execute(sql.SQL("CREATE TABLE IF NOT EXISTS {} ({})").format(sql.Identifier(table), sql.SQL(", ").join(sql.SQL("{} TEXT").format(sql.Identifier(c)) for c in columns)))
+                        cur.execute(sql.SQL("TRUNCATE TABLE {}").format(sql.Identifier(table)))
+                        if columns and len(df):
+                            q = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(sql.Identifier(table), sql.SQL(", ").join(map(sql.Identifier, columns)), sql.SQL(", ").join(sql.Placeholder() for _ in columns))
+                            rows = [tuple(None if pd.isna(v) else str(v) for v in row) for row in df.itertuples(index=False, name=None)]
+                            execute_batch(cur, q.as_string(conn), rows, page_size=1000)
+                        loaded.append({"table": table, "rows": len(df)})
+        finally: conn.close()
+        return {"status": "SUCCESS", "details": json.dumps(loaded)}
+    except Exception as exc:
+        return {"status": "FAILED", "details": f"{type(exc).__name__}: {exc}"}
 
 
 def read_csv(path):
@@ -337,6 +445,12 @@ def main():
     if not files:
         raise FileNotFoundError(f"No official PulseIQ CSVs found in {RAW_DIR}")
 
+    contract_path = find_contract_file(files)
+    contracts = read_csv(contract_path) if contract_path else None
+    if contracts is not None:
+        contracts.columns = [str(c).strip().lower() for c in contracts.columns]
+    write_contract_notes(contracts)
+
     # Use the dataset calendar's latest date as a fixed, repeatable tenure reference.
     # README defines the fact-data cutoff as September 2026. Do not use the
     # calendar dimension's max date: it intentionally extends beyond fact data.
@@ -353,6 +467,7 @@ def main():
 
     for path in files:  
         input_rows = output_rows = duplicate_rows = 0
+        business_rejected_rows = 0
         warnings, validation_issues = [], []
         status, error = "FAILED", ""
         try:
@@ -376,7 +491,24 @@ def main():
             df, numeric_warnings = standardize_numeric_types(df)
             warnings.extend(date_warnings + numeric_warnings)
             df = apply_helpers(df, path.name.lower(), reference_date)
+
+            # Task 1 business quarantine: invalid leave requests are not passed
+            # to the clean layer. Preserve them in rejected_rows.csv with a reason.
+            if path.name.lower().endswith("fact_leave.csv") and {"start_date", "end_date"}.issubset(df.columns):
+                leave_start = pd.to_datetime(df["start_date"], errors="coerce")
+                leave_end = pd.to_datetime(df["end_date"], errors="coerce")
+                invalid_leave_mask = leave_start.notna() & leave_end.notna() & (leave_end < leave_start)
+                invalid_leave = df.loc[invalid_leave_mask].copy()
+                business_rejected_rows = int(invalid_leave_mask.sum())
+                if not invalid_leave.empty:
+                    invalid_leave.insert(0, "_source_file", path.name)
+                    invalid_leave.insert(1, "_rejection_reason", "leave_end_before_start")
+                    rejected_parts.append(invalid_leave)
+                    df = df.loc[~invalid_leave_mask].copy()
+                    print(f"[QUARANTINE] {path.name}: {business_rejected_rows} row(s) with end_date before start_date")
+
             validation_issues = pandera_checks(df, path.name.lower())
+            validation_issues.extend(validate_contract(df, path.name, contracts))
 
             output_name = path.name
             df.to_csv(CLEAN_DIR / output_name, index=False, date_format="%Y-%m-%d %H:%M:%S")
@@ -393,7 +525,7 @@ def main():
         logs.append({
             "run_id": run_id, "file_name": path.name, "started_at": started,
             "input_rows": input_rows, "output_rows": output_rows,
-            "duplicate_rows": duplicate_rows, "rejected_rows": duplicate_rows,
+            "duplicate_rows": duplicate_rows, "rejected_rows": duplicate_rows + business_rejected_rows,
             "source_sha256": digest if 'digest' in locals() else "",
             "status": status, "warnings": "; ".join(warnings + (["Pandera unavailable; schema checks skipped"] if pa is None else [])),
             "validation_issues": "; ".join(validation_issues), "error": error,
@@ -419,6 +551,14 @@ def main():
     validation_path = LOG_DIR / "etl_validation_report.csv"
     pd.DataFrame(validation_rows, columns=["run_id", "file_name", "status", "issue"]).to_csv(validation_path, index=False)
 
+    # Row-count evidence for this run (separate from append-only run history).
+    summary_path = LOG_DIR / "etl_row_count_summary.csv"
+    pd.DataFrame(logs)[["run_id", "file_name", "input_rows", "output_rows", "duplicate_rows", "rejected_rows", "status"]].to_csv(summary_path, index=False)
+
+    # Database load status is explicit; skipped/failed loads are never reported as success.
+    db_result = load_postgres_idempotently(sorted(CLEAN_DIR.glob("*.csv")))
+    (LOG_DIR / "etl_database_load_report.json").write_text(json.dumps({"run_id": run_id, **db_result}, indent=2), encoding="utf-8")
+
     # Use the official metric dictionary; do not invent metric definitions.
     metric_files = [p for p in files if p.name.lower().endswith("metric_dictionary.csv")]
     if metric_files:
@@ -433,6 +573,9 @@ def main():
     print(f"Run history: {log_path}")
     print(f"Validation report: {validation_path}")
     print(f"Official first 5 metrics: {DOC_DIR / 'metric_dictionary_phase1.csv'}")
+    print(f"Row-count summary: {summary_path}")
+    print(f"Contract notes: {DOC_DIR / 'task1_data_contract_notes.md'}")
+    print(f"Database load: {db_result['status']} — {db_result['details']}")
     print("Raw files were not modified.")
 
 if __name__ == "__main__":

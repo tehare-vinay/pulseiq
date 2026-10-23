@@ -1,4 +1,4 @@
-table_name: Approved Leave Days by Type.
+docker compose run --rm etltable_name: Approved Leave Days by Type.
 main_dttm_col: null
 currency_code_column: null
 description: null

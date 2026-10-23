@@ -16,3 +16,55 @@ Thumbs.db
 *.duckdb
 *.db
 *.zip
+*.bak
+*.backup
+*.py.backup
+*.before_*
+*.before_*.py
+*.before_*.sql
+*.before_*.md
+*.before_*.txt
+
+# Temporary files
+*.bak
+*.backup
+*.py.backup
+*.before_*
+*_backup.py
+*_backup.sql
+.venv/
+venv/
+__pycache__/
+.env
+
+# Temporary backups
+*.bak
+*.backup
+*.py.backup
+*.before_*
+*.syntax_error_backup
+*.step4_backup
+*.step4_pre_*
+*.step5_backup*
+*_backup_*
+docker-compose.yml.backup*
+# Local-only environments and secrets
+.venv/
+venv/
+__pycache__/
+.env
+
+# Temporary/debug files
+*.bak
+*.backup
+*.py.backup
+*.before_*
+*.syntax_error_backup
+*.step4_backup
+*.step4_pre_*
+*.step5_backup*
+*_backup_*
+.venv/
+venv/
+__pycache__/
+.env

@@ -1,0 +1,6 @@
+﻿metric_id,metric_name,view_name,filter_or_group,view_result,manual_formula,manual_result,match,notes
+M01,Headcount,metric_m01_headcount,"month_start_date=2020-01-01; department_id=D01",60,"SUM(headcount_end)",60,true,"Source and view matched in SQL"
+M02,Hires,metric_m02_hires,"month_start_date=2020-01-01; department_id=D01",1,"SUM(hires)",1,true,"Source and view matched in SQL"
+M04,Attrition rate (monthly),metric_m04_attrition_rate,"month_start_date=2020-01-01; department_id=D01",3.28,"ROUND(100*SUM(exits)/SUM(headcount_start),2)",3.28,true,"Source and view matched in SQL"
+M07,Gross Pay,metric_m07_gross_pay,"period_end_date=2025-04-30; department_id=D01",21189954.97,"SUM(gross_pay)",21189954.97,true,"Source and view matched in SQL"
+M16,Revenue,metric_m16_revenue,"latest available periods; account_code in 4001,4002,4003,4004","2026-09 to 2026-05","SUM(signed_amount_debit_positive) for revenue accounts","Matched for all 5 displayed periods",true,"Latest five periods compared; all matches=true"

@@ -342,7 +342,11 @@ def pandera_checks(df, table_name):
         parsed = pd.to_datetime(
             original, errors="coerce", format="mixed"
         )
-        invalid_count = int((nonblank & parsed.isna()).sum())
+        invalid_mask = nonblank & parsed.isna()
+        if col == "valid_to":
+            open_ended = original.astype("string").str.strip().str.startswith("9999-12-31", na=False)
+            invalid_mask &= ~open_ended
+        invalid_count = int(invalid_mask.sum())
 
         if invalid_count:
             issues.append(
@@ -522,6 +526,9 @@ def main():
                             "leave_end_date_before_start_date",
                         )
                         rejected_parts.append(invalid_leaves)
+                        # Save invalid leave rows with their rejection reason.
+                        invalid_leave_path = REJECTED_DIR / "warehouse_fact_leave_invalid_dates.csv"
+                        invalid_leaves.to_csv(invalid_leave_path, index=False)
                         df = df.loc[~invalid_mask].copy()
                 else:
                     validation_issues.append(

@@ -1,0 +1,6 @@
+﻿                metric                | rows | periods | min_value | max_value
+--------------------------------------+------+---------+-----------+-----------
+ metric_m14_late_arrival_rate         |  180 |      18 |      2.50 |     11.11
+ metric_m32_overtime_hours            |  180 |      18 |      0.00 |    479.00
+ metric_m33_leave_days_by_type_status |   86 |      18 |      5.00 |    205.00
+(3 rows)

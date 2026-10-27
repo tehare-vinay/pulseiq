@@ -1,0 +1,25 @@
+﻿viewname,definition
+metric_m11_overtime_share," SELECT period_end_date,
+    department_id,
+    ((100.0 * sum((NULLIF(overtime_pay, ''::text))::numeric)) / NULLIF(sum((NULLIF(employer_cost, ''::text))::numeric), (0)::numeric)) AS overtime_share_pct
+   FROM fact_payroll
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);"
+metric_m13_attendance_rate," SELECT period_end_date,
+    department_id,
+    ((100.0 * sum((NULLIF(present_days, ''::text))::numeric)) / NULLIF(sum((NULLIF(scheduled_days, ''::text))::numeric), (0)::numeric)) AS attendance_rate_pct
+   FROM fact_attendance_monthly
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);"
+metric_m14_late_arrival_rate," SELECT period_end_date,
+    department_id,
+    ((100.0 * sum((NULLIF(late_arrivals, ''::text))::numeric)) / NULLIF(sum((NULLIF(scheduled_days, ''::text))::numeric), (0)::numeric)) AS late_arrival_rate_pct
+   FROM fact_attendance_monthly
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);"
+metric_m15_lop_days," SELECT period_end_date,
+    department_id,
+    sum((NULLIF(lop_days, ''::text))::numeric) AS lop_days
+   FROM fact_payroll
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);"

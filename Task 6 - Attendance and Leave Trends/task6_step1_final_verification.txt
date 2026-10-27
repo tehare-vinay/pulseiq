@@ -1,0 +1,79 @@
+﻿TASK 6 STEP 1 - FINAL VERIFICATION
+Generated: 2026-10-27 14:45:15
+
+=== REQUIRED VIEWS ===
+              view_name               | view_status
+--------------------------------------+-------------
+ metric_m13_attendance_rate           | EXISTS
+ metric_m14_late_arrival_rate         | EXISTS
+ metric_m32_overtime_hours            | EXISTS
+ metric_m33_leave_days_by_type_status | EXISTS
+(4 rows)
+
+=== VIEW DEFINITIONS ===
+               viewname               |                                                                            definition
+--------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ metric_m13_attendance_rate           |  SELECT period_end_date,                                                                                                                                         +
+                                      |     department_id,                                                                                                                                               +
+                                      |     round(((100.0 * sum((COALESCE((NULLIF(TRIM(BOTH FROM present_days), ''::text))::numeric, (0)::numeric) + (0.5 *                                              +
+                                      |         CASE                                                                                                                                                     +
+                                      |             WHEN (TRIM(BOTH FROM COALESCE(half_days_unpaid, ''::text)) ~ '^[0-9]+(\.[0-9]+)?$'::text) THEN (TRIM(BOTH FROM half_days_unpaid))::numeric           +
+                                      |             ELSE (0)::numeric                                                                                                                                    +
+                                      |         END)))) / NULLIF(sum((NULLIF(TRIM(BOTH FROM scheduled_days), ''::text))::numeric), (0)::numeric)), 2) AS attendance_rate_pct                             +
+                                      |    FROM fact_attendance_monthly                                                                                                                                  +
+                                      |   GROUP BY period_end_date, department_id                                                                                                                        +
+                                      |  HAVING (count(DISTINCT employee_id) >= 5);
+ metric_m14_late_arrival_rate         |  SELECT period_end_date,                                                                                                                                         +
+                                      |     department_id,                                                                                                                                               +
+                                      |     ((100.0 * sum((NULLIF(late_arrivals, ''::text))::numeric)) / NULLIF(sum((NULLIF(scheduled_days, ''::text))::numeric), (0)::numeric)) AS late_arrival_rate_pct+
+                                      |    FROM fact_attendance_monthly                                                                                                                                  +
+                                      |   GROUP BY period_end_date, department_id                                                                                                                        +
+                                      |  HAVING (count(DISTINCT employee_id) >= 5);
+ metric_m32_overtime_hours            |  SELECT period_end_date,                                                                                                                                         +
+                                      |     department_id,                                                                                                                                               +
+                                      |     sum((NULLIF(TRIM(BOTH FROM overtime_hours), ''::text))::numeric) AS overtime_hours                                                                           +
+                                      |    FROM fact_attendance_monthly                                                                                                                                  +
+                                      |   GROUP BY period_end_date, department_id                                                                                                                        +
+                                      |  HAVING (count(DISTINCT NULLIF(TRIM(BOTH FROM employee_id), ''::text)) >= 5);
+ metric_m33_leave_days_by_type_status |  SELECT "left"(NULLIF(TRIM(BOTH FROM start_date), ''::text), 7) AS leave_month,                                                                                  +
+                                      |     leave_type_code,                                                                                                                                             +
+                                      |     status,                                                                                                                                                      +
+                                      |     count(*) AS leave_requests,                                                                                                                                  +
+                                      |     count(DISTINCT NULLIF(TRIM(BOTH FROM employee_id), ''::text)) AS employee_count,                                                                             +
+                                      |     sum((NULLIF(TRIM(BOTH FROM days), ''::text))::numeric) AS leave_days                                                                                         +
+                                      |    FROM fact_leave                                                                                                                                               +
+                                      |   WHERE (NULLIF(TRIM(BOTH FROM start_date), ''::text) IS NOT NULL)                                                                                               +
+                                      |   GROUP BY ("left"(NULLIF(TRIM(BOTH FROM start_date), ''::text), 7)), leave_type_code, status                                                                    +
+                                      |  HAVING (count(DISTINCT NULLIF(TRIM(BOTH FROM employee_id), ''::text)) >= 5);
+(4 rows)
+
+=== ROW COUNTS ===
+                metric                | rows | periods
+--------------------------------------+------+---------
+ metric_m33_leave_days_by_type_status |   86 |      18
+ metric_m13_attendance_rate           |  180 |      18
+ metric_m14_late_arrival_rate         |  180 |      18
+ metric_m32_overtime_hours            |  180 |      18
+(4 rows)
+
+=== SOURCE DICTIONARY ===
+
+data\clean\data_dictionary.csv:87:dim_leave_type,leave_type_code,text,"Leave type: CL, SL, EL, ML, BL or LOP.",0,0.0,6,CL
+data\clean\data_dictionary.csv:88:dim_leave_type,leave_type_name,text,Leave type name.,0,0.0,6,Casual Leave
+data\clean\data_dictionary.csv:89:dim_leave_type,pay_type,text,Paid or Unpaid.,0,0.0,2,Paid
+data\clean\data_dictionary.csv:90:dim_leave_type,annual_quota_days,integer,Annual quota in days.,0,0.0,5,12
+data\clean\data_dictionary.csv:91:dim_leave_type,prorated_for_joiners,text,Y if the quota is prorated for new joiners.,0,0.0,2,Y
+data\clean\data_dictionary.csv:92:dim_leave_type,carry_forward_allowed,text,Y if unused leave carries forward.,0,0.0,2,N
+data\clean\data_dictionary.csv:93:dim_leave_type,max_carry_forward_days,integer,Maximum days that can be carried forward.,0,0.0,2,0
+data\clean\data_dictionary.csv:94:dim_leave_type,policy_note,text,Policy note.,0,0.0,6,Short-notice personal leave
+data\clean\data_dictionary.csv:147:fact_payroll,overtime_hours_paid,decimal,Overtime hours paid (capped at 50).,0,0.0,55,0.0
+data\clean\data_dictionary.csv:175:fact_attendance_monthly,scheduled_days,decimal,Working days the employee was scheduled in the month.,0,0.0,23,20.0
+data\clean\data_dictionary.csv:178:fact_attendance_monthly,half_days_unpaid,decimal,Half days without pay.,0,0.0,4,0.0
+data\clean\data_dictionary.csv:181:fact_attendance_monthly,late_arrivals,decimal,Late check-ins in the month.,0,0.0,10,1.0
+data\clean\data_dictionary.csv:183:fact_attendance_monthly,overtime_hours,decimal,Overtime hours recorded (only overtime-eligible roles).,0,0.0,55,0.0
+data\clean\data_dictionary.csv:184:fact_attendance_monthly,attendance_rate,decimal,(Present days + 0.5 x half days) / scheduled days.,0,0.0,117,1.0
+data\clean\data_dictionary.csv:189:fact_leave,leave_type_code,text,"Leave type: CL, SL, EL, ML, BL or LOP.",0,0.0,6,CL
+data\clean\data_dictionary.csv:331:kpi_targets,attendance_rate_target,decimal,Target attendance rate.,0,0.0,1,0.94
+data\clean\data_dictionary.csv:353:reference_summary_dept_month,overtime_hours,decimal,Overtime hours recorded (only overtime-eligible roles).,0,0.0,70,0.0
+data\clean\data_dictionary.csv:354:reference_summary_dept_month,late_arrivals,decimal,Late check-ins in the month.,0,0.0,80,1.0
+data\clean\data_dictionary.csv:355:reference_summary_dept_month,attendance_rate,decimal,(Present days + 0.5 x half days) / scheduled days.,0,0.0,170,0.95

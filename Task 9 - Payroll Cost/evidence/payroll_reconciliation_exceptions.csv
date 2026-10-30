@@ -1,0 +1,6 @@
+﻿month,employee_difference,gross_difference,net_difference,employer_cost_difference,status,reason
+2025-05,0,60013.15,58013.15,61813.15,UNRESOLVED,"Candidate payroll rows match the differences, but source evidence does not identify which row is invalid."
+2025-12,1,96527.42,94527.42,98327.42,UNRESOLVED,"Monthly employee count and payroll totals differ from the answer key; source review required."
+2026-02,0,153011.89,137513.27,154811.89,UNRESOLVED,"Candidate payroll rows match the differences, but source evidence does not identify which row is invalid."
+2026-04,0,96015.00,95815.00,96015.00,UNRESOLVED,"Candidate payroll row matches the differences, but source evidence does not prove it is invalid."
+git status --short

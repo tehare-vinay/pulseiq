@@ -1,0 +1,7 @@
+﻿-- Task 8 metric views:
+-- public.metric_m24_velocity
+-- public.metric_m25_avg_cycle_time
+-- public.metric_m23_on_time_delivery_rate
+--
+-- Metric definitions are documented in ../metric_definitions.md.
+-- Validate column names and downstream dependencies before changing views.

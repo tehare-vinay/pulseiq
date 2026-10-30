@@ -1,0 +1,4 @@
+﻿ velocity_view_rows | null_velocity_values | negative_velocity_values 
+--------------------+----------------------+--------------------------
+                608 |                    0 |                        0
+(1 row)

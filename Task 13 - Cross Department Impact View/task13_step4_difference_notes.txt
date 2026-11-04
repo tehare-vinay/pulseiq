@@ -1,0 +1,25 @@
+TASK 13 - STEP 4 REFERENCE COMPARISON
+Actual rows: 198
+Reference rows: 198
+Actual unique department-month keys: 198
+Reference unique department-month keys: 198
+Matched keys: 198
+Actual-only keys: 0
+Reference-only keys: 0
+
+Metrics compared: employer_cost, gross_pay, overtime_pay, overtime_hours, headcount_end, attrition_rate_monthly_pct
+Metrics missing from actual output: 
+Metrics missing from reference: 
+
+Metric comparison summary:
+                    metric  compared_rows  matching_rows  different_rows  null_actual  null_reference
+             employer_cost            198            194               4            0               0
+                 gross_pay            198            194               4            0               0
+              overtime_pay            198            198               0            0               0
+            overtime_hours            198            198               0            0               0
+             headcount_end            198            198               0            0               0
+attrition_rate_monthly_pct            198            198               0            0               0
+
+Tolerance used: 0.01 for numeric metric comparisons.
+This tolerance is a comparison setting, not a confirmed unlock_PQ-13 rule.
+unlock_PQ-13 was not found; its validation instructions remain unverified.

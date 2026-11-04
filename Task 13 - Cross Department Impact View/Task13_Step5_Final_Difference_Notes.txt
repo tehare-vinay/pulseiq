@@ -1,0 +1,31 @@
+TASK 13 - STEP 5: FINAL DIFFERENCE EXPLANATION NOTES
+Reference period: April 2025 to September 2026.
+
+Reference comparison facts recorded in the existing Step 4 output:
+- Reference rows: 198; unique department-month keys: 198.
+- Actual rows before date-window correction: 203; unique keys: 203.
+- Matched keys: 198.
+- Reference-only keys: 0.
+- Five actual-only keys are outside the reference period (October-December 2026).
+- For the 198 matched keys, overtime_pay, overtime_hours, headcount_end and
+  attrition_rate_monthly_pct match in all 198 rows.
+- Gross pay and employer cost differ in four department-months.
+
+UNRESOLVED PAYROLL DIFFERENCES
+Department | Month | Gross pay difference | Employer cost difference | Current evidence/status
+D01 | 2026-04 | 96,015.00 | 96,015.00 | Employee records identified; business reason not proven.
+D02 | 2026-02 | 153,011.89 | 154,811.89 | Duplicate payroll rows identified; source cause not proven.
+D08 | 2025-04 | 60,013.15 | 61,813.15 | Employee records identified; business reason not proven.
+D09 | 2025-12 | 96,527.42 | 98,327.42 | Employee records identified; business reason not proven.
+
+EXPLANATION / CONTROL
+1. These are observed differences against the reference, not confirmed business explanations.
+2. D02 duplicate rows must be checked against source payroll records and payroll run/item identifiers.
+3. D01, D08 and D09 employee-level records have been identified, but the reason for the amount differences remains unproven.
+4. Do not delete, deduplicate, adjust or force-match payroll amounts without source evidence and source-owner confirmation.
+5. The five actual-only keys are outside the reference period and should be removed from the comparison window, not described as unexplained reference mismatches.
+6. The tolerance of 0.01 used by the comparison script is a technical comparison setting; it is not confirmed as an official unlock_PQ-13 rule.
+7. unlock_PQ-13 and its vault-specific validation instructions were not located in the supplied project evidence. Therefore this control remains unverified.
+
+STEP 5 CONCLUSION
+All known differences have been documented with their exact department, month, amount and current investigation status. Their underlying business causes remain pending source verification. No unsupported explanation has been assigned.

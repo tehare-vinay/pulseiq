@@ -1,0 +1,20 @@
+flowchart LR
+  DE[dim_employee<br/>PK employee_key<br/>SCD history valid_from/valid_to]
+  DD[dim_department<br/>PK department_id]
+  DR[dim_role<br/>PK role_id]
+  DT[dim_date<br/>PK date_key]
+  DLT[dim_leave_type<br/>PK leave_type_id]
+  FP((fact_payroll<br/>Grain: source payroll item))
+  FA((fact_attendance_monthly<br/>Grain: employee-month record))
+  FL((fact_leave<br/>Grain: leave request))
+  FH((fact_headcount_monthly<br/>Grain: department-date snapshot))
+  DE --- FP
+  DT --- FP
+  DE --- FA
+  DE --- FL
+  DLT --- FL
+  DT --- FH
+  DD --- FH
+  DD --- DR
+  DE --- DD
+  DE --- DR

@@ -1,0 +1,24 @@
+﻿Task 8 - Step 1: Metric Validation Evidence
+Date: 2026-10-28
+
+Velocity view:
+- View: public.metric_m24_velocity
+- Rows: 668
+- NULL velocity values: 0
+- Negative velocity values: 0
+
+Cycle-time view:
+- View: public.metric_m25_avg_cycle_time
+- Uses valid start and completion dates.
+- Negative date intervals excluded.
+- Output is in days.
+
+On-time delivery view:
+- View: public.metric_m23_on_time_delivery_rate
+- Uses completed tasks with both due and completion dates.
+- On-time condition: completed_date <= due_date.
+
+Source data checks:
+- Done tasks: 24,139
+- Done tasks missing completion dates: 8
+- Negative date intervals identified: 12

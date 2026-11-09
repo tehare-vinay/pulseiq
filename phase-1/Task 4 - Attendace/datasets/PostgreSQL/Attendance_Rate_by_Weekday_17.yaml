@@ -1,0 +1,75 @@
+table_name: Attendance Rate by Weekday.(%)
+main_dttm_col: null
+currency_code_column: null
+description: null
+default_endpoint: null
+offset: 0
+cache_timeout: null
+catalog: pulseiq_warehouse
+schema: ''
+sql: "SELECT\r\n    TRIM(TO_CHAR(period_end_date, 'Day')) AS weekday,\r\n    EXTRACT(ISODOW\
+  \ FROM period_end_date) AS weekday_order,\r\n    ROUND(\r\n        100.0 * SUM(present_days)\
+  \ /\r\n        NULLIF(SUM(scheduled_days), 0),\r\n        2\r\n    ) AS attendance_rate_pct\r\
+  \nFROM warehouse.fact_attendance_monthly\r\nGROUP BY\r\n    TRIM(TO_CHAR(period_end_date,\
+  \ 'Day')),\r\n    EXTRACT(ISODOW FROM period_end_date)\r\nORDER BY weekday_order;"
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+folders: null
+uuid: 5e0438a5-d430-404c-b2a9-1dc8f79ad644
+metrics:
+- metric_name: count
+  verbose_name: COUNT(*)
+  metric_type: count
+  expression: COUNT(*)
+  description: null
+  d3format: null
+  currency: null
+  extra: null
+  warning_text: null
+columns:
+- column_name: attendance_rate_pct
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: DECIMAL
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+- column_name: weekday_order
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: DECIMAL
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+- column_name: weekday
+  verbose_name: null
+  is_dttm: false
+  is_active: true
+  type: STRING
+  advanced_data_type: null
+  groupby: true
+  filterable: true
+  expression: null
+  description: null
+  python_date_format: null
+  datetime_format: null
+  extra: null
+version: 1.0.0
+database_uuid: c952c5ca-4ab9-4c10-ad29-79ba6e573f02

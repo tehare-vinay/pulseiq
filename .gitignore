@@ -77,3 +77,6 @@ logs/
 docker-compose.backup.yml
 README_TASK2_PATCH.md
 *.backup.sql
+
+# Task 16 generated PDF reports
+phase-4/Task 16 - Automated Report Builder/reports/*.pdf

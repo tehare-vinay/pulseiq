@@ -182,3 +182,79 @@ The project emphasizes reliable and consistent reporting through:
 
 
 **Project Status:** Phase 1, Phase 2, and Phase 3 completed.
+
+---
+
+# Phase 4 – Task 16: Automated Report Builder
+
+## Overview
+Implemented an automated monthly business performance report generator for PulseIQ Analytics using existing governed metric views.
+
+## Features
+- Generates monthly PDF business performance reports.
+- Includes Executive KPI Summary.
+- Department-wise Performance.
+- Profit and Loss Summary.
+- Cash Flow Summary.
+- Monthly Headcount Trend.
+- Displays reporting date range and data cut-off.
+- Supports month-based report generation.
+
+## Setup Instructions
+
+### 1. Create Virtual Environment
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+### 2. Install Dependencies
+
+```powershell
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 3. Configure Environment
+
+Create a local `.env` file using `.env.example` as a reference. Configure PostgreSQL connection details and keep credentials private.
+
+### 4. Start PostgreSQL
+
+```powershell
+docker compose up -d postgres
+docker ps
+```
+
+### 5. Generate Monthly Report
+
+```powershell
+python "phase-4/Task 16 - Automated Report Builder/build_report.py" --month 2026-09
+```
+
+Replace `2026-09` with the required reporting month.
+
+### 6. Output
+
+Generated PDF reports are saved in:
+
+`phase-4/Task 16 - Automated Report Builder/reports/`
+
+## Automated Scheduling
+
+Monthly report generation is configured through GitHub Actions:
+
+`.github/workflows/monthly-report.yml`
+
+The workflow supports scheduled and manual execution.
+
+## Dependencies
+
+All Python package versions are pinned in the root `requirements.txt`.
+
+## Deliverable
+
+Automated monthly PDF reporting with pinned dependencies, setup documentation and scheduled execution.
+
+**Status:** Phase 4 – Task 16 implementation.

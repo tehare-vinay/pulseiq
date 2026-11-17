@@ -1,4 +1,4 @@
-
+﻿
 from pathlib import Path
 from datetime import datetime
 
@@ -9,7 +9,7 @@ import pandas as pd
 # PULSEIQ ANALYTICS - PHASE 1 DATA VALIDATION
 # ============================================================
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
 CLEAN_DIR = PROJECT_ROOT / "data" / "clean"
@@ -459,3 +459,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

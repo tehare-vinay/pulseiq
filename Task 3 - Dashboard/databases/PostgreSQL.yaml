@@ -1,0 +1,17 @@
+database_name: PostgreSQL
+sqlalchemy_uri: postgresql+psycopg2://pulseiq_user:XXXXXXXXXX@postgres:5432/pulseiq_warehouse
+cache_timeout: null
+expose_in_sqllab: true
+allow_run_async: false
+allow_ctas: false
+allow_cvas: false
+allow_dml: false
+allow_file_upload: true
+extra:
+  allows_virtual_table_explore: true
+  disable_drill_to_detail: true
+  allow_multi_catalog: true
+impersonate_user: false
+configuration_method: dynamic_form
+uuid: c952c5ca-4ab9-4c10-ad29-79ba6e573f02
+version: 1.0.0

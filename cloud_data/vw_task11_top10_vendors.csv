@@ -1,0 +1,11 @@
+vendor_rank,vendor_id,vendor_name,bill_count,spend_excl_gst,total_spend
+1,V-001,Skyline Realty Holdings,22,16879440.0,19917739.2
+2,V-009,StratoHost Infrastructure,17,14202760.0,16759256.8
+3,V-008,NimbusCloud Services,19,13731920.0,16203665.6
+4,V-003,Marina Business Park LLP,18,12085460.0,14260842.8
+5,V-018,BrandBridge Agency,15,9578240.0,11302323.2
+6,V-002,Garden City Workspaces,14,9189310.0,10843385.8
+7,V-017,PixelPulse Media,16,7696100.0,9081398.0
+8,V-028,Medicare Group Health Cover,8,6645690.0,7841914.2
+9,V-020,Ledger & Co Chartered Accountants,12,6527530.0,7702485.4
+10,V-013,DataLens Analytics Licences,18,5886650.0,6946247.0

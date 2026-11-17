@@ -1,5 +1,4 @@
-﻿
-services:
+﻿services:
   postgres:
     image: postgres:16
     container_name: pulseiq_warehouse_db
@@ -61,5 +60,3 @@ services:
 
 volumes:
   postgres_data:
-
-  

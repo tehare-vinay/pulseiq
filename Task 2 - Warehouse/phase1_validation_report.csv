@@ -1,0 +1,23 @@
+checked_at,check_name,dataset,status,details
+2026-10-14T07:42:50+00:00,required_columns,dim_employee,PASS,All required columns exist.
+2026-10-14T07:42:50+00:00,required_columns,dim_department,PASS,All required columns exist.
+2026-10-14T07:42:50+00:00,required_columns,dim_role,PASS,All required columns exist.
+2026-10-14T07:42:50+00:00,required_columns,dim_date,PASS,All required columns exist.
+2026-10-14T07:42:50+00:00,required_columns,fact_payroll,PASS,All required columns exist.
+2026-10-14T07:42:50+00:00,required_columns,fact_attendance_monthly,PASS,All required columns exist.
+2026-10-14T07:42:50+00:00,required_columns,fact_leave,PASS,All required columns exist.
+2026-10-14T07:42:50+00:00,required_columns,fact_headcount_monthly,PASS,All required columns exist.
+2026-10-14T07:42:50+00:00,unique_key,dim_employee,PASS,Key=employee_key; duplicate rows=0; missing values=0
+2026-10-14T07:42:50+00:00,unique_key,dim_department,PASS,Key=department_id; duplicate rows=0; missing values=0
+2026-10-14T07:42:50+00:00,unique_key,dim_role,PASS,Key=role_id; duplicate rows=0; missing values=0
+2026-10-14T07:42:50+00:00,unique_key,dim_date,PASS,Key=date_key; duplicate rows=0; missing values=0
+2026-10-14T07:42:50+00:00,unique_key,fact_payroll,PASS,Key=payroll_item_id; duplicate rows=0; missing values=0
+2026-10-14T07:42:50+00:00,unique_key,fact_attendance_monthly,PASS,Key=attendance_fact_id; duplicate rows=0; missing values=0
+2026-10-14T07:42:50+00:00,unique_key,fact_leave,PASS,Key=leave_request_id; duplicate rows=0; missing values=0
+2026-10-14T07:42:50+00:00,foreign_key,fact_payroll,REVIEW,"employee_key against dim_employee; orphan rows=2; missing keys=0; sentinel orphan values=['-1']; sample affected records=[{'payroll_item_id': 'PI-X0003', 'employee_id': 'EMP-9001', 'period_end_date': '2026-04-30 00:00:00', 'employee_key': -1}, {'payroll_item_id': 'PI-X0004', 'employee_id': 'EMP-9002', 'period_end_date': '2025-12-31 00:00:00', 'employee_key': -1}] | Sentinel keys such as -1 are placeholders and require separate investigation; they are not automatically repaired or deleted."
+2026-10-14T07:42:50+00:00,foreign_key,fact_attendance_monthly,PASS,employee_key references valid records in dim_employee; no orphan or missing keys.
+2026-10-14T07:42:50+00:00,foreign_key,fact_leave,PASS,employee_key references valid records in dim_employee; no orphan or missing keys.
+2026-10-14T07:42:50+00:00,employee_history_dates,dim_employee,PASS,Missing/invalid valid_from or valid_to before valid_from: 0 rows. Null valid_to is allowed.
+2026-10-14T07:42:50+00:00,foreign_key,fact_payroll,PASS,date_key references valid records in dim_date; no orphan or missing keys.
+2026-10-14T07:42:50+00:00,foreign_key,fact_headcount_monthly,PASS,date_key references valid records in dim_date; no orphan or missing keys.
+2026-10-14T07:42:50+00:00,foreign_key,fact_headcount_monthly,PASS,department_id references valid records in dim_department; no orphan or missing keys.

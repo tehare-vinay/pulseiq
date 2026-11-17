@@ -1,13 +1,16 @@
-﻿import os
+﻿import sys
 from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
-import psycopg2
 import streamlit as st
-from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+# Add the dashboard root so this page can import the shared Parquet loader.
+DASHBOARD_ROOT = Path(__file__).resolve().parents[1]
+if str(DASHBOARD_ROOT) not in sys.path:
+    sys.path.insert(0, str(DASHBOARD_ROOT))
+
+from cloud_data import load_parquet
 
 st.set_page_config(
     page_title="PulseIQ | Attendance Trends",
@@ -21,27 +24,18 @@ st.caption(
     "Data sourced from the governed metric layer"
 )
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=300)
 def load_attendance():
-    conn = psycopg2.connect(
-        host=os.getenv("PGHOST", "localhost"),
-        port=int(os.getenv("PGPORT", "5432")),
-        dbname=os.getenv("PGDATABASE", "pulseiq_warehouse"),
-        user=os.getenv("PGUSER", "pulseiq_user"),
-        password=os.getenv("PGPASSWORD", ""),
-        connect_timeout=5,
-    )
-    try:
-        return pd.read_sql_query(
-            """
-            SELECT period_end_date, department_id, attendance_rate_pct
-            FROM public.metric_m13_attendance_rate
-            ORDER BY period_end_date, department_id
-            """,
-            conn,
+    """Load the already-exported, governed attendance metric from Parquet."""
+    df = load_parquet("metric_m13_attendance_rate")
+    required = {"period_end_date", "department_id", "attendance_rate_pct"}
+    missing = required.difference(df.columns)
+    if missing:
+        raise ValueError(
+            "Attendance Parquet is missing required columns: "
+            + ", ".join(sorted(missing))
         )
-    finally:
-        conn.close()
+    return df.sort_values(["period_end_date", "department_id"]).copy()
 
 try:
     df = load_attendance()
@@ -272,48 +266,27 @@ st.download_button(
 # Read only governed metric views.
 # ============================================================
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=300)
 def load_task6_step3_metrics():
-    conn = psycopg2.connect(
-        host=os.getenv("PGHOST", "localhost"),
-        port=int(os.getenv("PGPORT", "5432")),
-        dbname=os.getenv("PGDATABASE", "pulseiq_warehouse"),
-        user=os.getenv("PGUSER", "pulseiq_user"),
-        password=os.getenv("PGPASSWORD", ""),
-        connect_timeout=5,
+    """Load governed Task 6 metrics from the public Parquet export."""
+    late_df = load_parquet("metric_m14_late_arrival_rate")
+    overtime_df = load_parquet("metric_m32_overtime_hours")
+    leave_df = load_parquet("metric_m33_leave_days_by_type_status")
+
+    expected = {
+        "late_arrival_rate_pct": late_df,
+        "overtime_hours": overtime_df,
+        "leave_days": leave_df,
+    }
+    for column, frame in expected.items():
+        if column not in frame.columns:
+            raise ValueError(f"Parquet metric is missing required column: {column}")
+
+    return (
+        late_df.sort_values(["period_end_date", "department_id"]).copy(),
+        overtime_df.sort_values(["period_end_date", "department_id"]).copy(),
+        leave_df.sort_values(["leave_month", "leave_type_code", "status"]).copy(),
     )
-    try:
-        late_df = pd.read_sql_query(
-            """
-            SELECT period_end_date, department_id, late_arrival_rate_pct
-            FROM public.metric_m14_late_arrival_rate
-            ORDER BY period_end_date, department_id
-            """,
-            conn,
-        )
-
-        overtime_df = pd.read_sql_query(
-            """
-            SELECT period_end_date, department_id, overtime_hours
-            FROM public.metric_m32_overtime_hours
-            ORDER BY period_end_date, department_id
-            """,
-            conn,
-        )
-
-        leave_df = pd.read_sql_query(
-            """
-            SELECT leave_month, leave_type_code, status,
-                   leave_requests, employee_count, leave_days
-            FROM public.metric_m33_leave_days_by_type_status
-            ORDER BY leave_month, leave_type_code, status
-            """,
-            conn,
-        )
-
-        return late_df, overtime_df, leave_df
-    finally:
-        conn.close()
 
 
 st.divider()

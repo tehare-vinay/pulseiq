@@ -1,0 +1,7 @@
+metric,compared_rows,matching_rows,different_rows,null_actual,null_reference
+employer_cost,198,194,4,0,0
+gross_pay,198,194,4,0,0
+overtime_pay,198,198,0,0,0
+overtime_hours,198,198,0,0,0
+headcount_end,198,198,0,0,0
+attrition_rate_monthly_pct,198,198,0,0,0

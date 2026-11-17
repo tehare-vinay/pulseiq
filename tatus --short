@@ -1,0 +1,125 @@
+phase-1/Task 1 - ETL/check_placeholder_keys.py:39: trailing whitespace.
+[32m+[m[41m    [m
+phase-1/Task 1 - ETL/etl_pipeline.py:234: trailing whitespace.
+[32m+[m[32m                 "normal_balance", "cost_center", "pay_type",[m[41m [m
+phase-1/Task 1 - ETL/etl_pipeline.py:261: trailing whitespace.
+[32m+[m[41m  [m
+phase-1/Task 1 - ETL/etl_pipeline.py:288: trailing whitespace.
+[32m+[m[41m [m
+phase-1/Task 1 - ETL/etl_pipeline.py:468: trailing whitespace.
+[32m+[m[32m    for path in files:[m[41m  [m
+phase-1/Task 1 - ETL/validate_phase1.py:462: new blank line at EOF.
+phase-1/Task 2 - Warehouse/load_warehouse.py:229: new blank line at EOF.
+phase-1/Task 2 - Warehouse/task2_history_and_orphans_notes.md:21: new blank line at EOF.
+phase-1/Task 2 - Warehouse/task2_orphan_check_results.md:41: new blank line at EOF.
+phase-1/Task 3 - Data Quality Gatekeeper/scripts/run_dq_checks.py:181: trailing whitespace.
+[32m+[m[41m    [m
+phase-1/Task 3 - Data Quality Gatekeeper/sql/dq_checks_task3.sql:151: new blank line at EOF.
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:1: trailing whitespace.
+[32m+[m[32m﻿CREATE OR REPLACE VIEW public.metric_m01_headcount AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:9: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m02_hires AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:20: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m03_exits AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:31: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m04_attrition_rate AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:42: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m05_rolling_12m_attrition AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:67: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m06_voluntary_attrition AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:75: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m07_gross_pay AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:83: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m08_net_pay AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:91: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m09_payroll_cost AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:99: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m10_cost_per_head AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:107: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m11_overtime_share AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:115: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m12_variable_pay_share AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:123: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m13_attendance_rate AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:131: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m14_late_arrival_rate AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:139: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m15_lop_days AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:147: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m16_revenue AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:154: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m17_net_profit AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:161: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m18_operating_margin AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:183: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m19_payroll_pct_revenue AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:203: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m20_dso AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:212: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m21_overdue_receivables AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:219: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m22_task_completion_rate AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:227: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m23_on_time_delivery_rate AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:237: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m24_velocity AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:245: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m25_avg_cycle_time AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:255: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m26_anomaly_flag_rate AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:265: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m27_high_risk_share AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:274: trailing whitespace.
+[32m+[m[32mCREATE OR REPLACE VIEW public.metric_m28_forecast_error AS[m[41m [m
+phase-1/Task 4 - Governed Metric Layer/sql/metric_views_examples.sql:292: new blank line at EOF.
+phase-2/Task 10 - Budget vs Actual and KPI Targets/dashboard/6_Budget_vs_Actual.py:378: trailing whitespace.
+[32m+[m[41m    [m
+phase-2/Task 7 - Attrition Analytics/app.py:373: new blank line at EOF.
+phase-2/Task 7 - Attrition Analytics/dashboard/3_Attrition_Analytics.py:65: trailing whitespace.
+[32m+[m[41m   [m
+phase-2/Task 7 - Attrition Analytics/dashboard/3_Attrition_Analytics.py:78: trailing whitespace.
+[32m+[m[41m    [m
+phase-2/Task 7 - Attrition Analytics/dashboard/3_Attrition_Analytics.py:105: trailing whitespace.
+[32m+[m[41m   [m
+phase-2/Task 7 - Attrition Analytics/dashboard/3_Attrition_Analytics.py:273: trailing whitespace.
+[32m+[m[41m    [m
+phase-2/Task 8 - Team Productivity/evidence/cycle_time_sample.txt:1: trailing whitespace.
+[32m+[m[32m﻿ team_id | sprint_id | avg_cycle_time_days | completed_task_count[m[41m [m
+phase-2/Task 8 - Team Productivity/evidence/manual_metric_verification.md:90: new blank line at EOF.
+phase-2/Task 8 - Team Productivity/evidence/metric_view_definitions.txt:1: trailing whitespace.
+[32m+[m[32m﻿            view_name             |                                                                                                                                                                                                                                                                                      definition[m[41m                                                                                                                                                                                                                                                                                      [m
+phase-2/Task 8 - Team Productivity/evidence/on_time_rate_sample.txt:1: trailing whitespace.
+[32m+[m[32m﻿ team_id | sprint_id | on_time_tasks | completed_tasks | on_time_delivery_rate_pct[m[41m [m
+phase-2/Task 8 - Team Productivity/evidence/velocity_sample.txt:1: trailing whitespace.
+[32m+[m[32m﻿ team_id | sprint_id | completed_story_points[m[41m [m
+phase-2/Task 8 - Team Productivity/evidence/velocity_validation.txt:1: trailing whitespace.
+[32m+[m[32m﻿ velocity_view_rows | null_velocity_values | negative_velocity_values[m[41m [m
+phase-3/Task 11 - Profit and Loss/sql/account_audit.sql:19: trailing whitespace.
+[32m+[m[32mSELECT[m[41m [m
+phase-3/Task 11 - Profit and Loss/sql/account_audit.sql:27: trailing whitespace.
+[32m+[m[32mSELECT[m[41m [m
+phase-3/Task 11 - Profit and Loss/sql/account_audit.sql:35: trailing whitespace.
+[32m+[m[32mGROUP BY[m[41m [m
+phase-3/Task 11 - Profit and Loss/sql/expense_vendor_audit.sql:4: trailing whitespace.
+[32m+[m[32mSELECT[m[41m [m
+phase-3/Task 11 - Profit and Loss/sql/expense_vendor_audit.sql:17: trailing whitespace.
+[32m+[m[32mSELECT[m[41m [m
+phase-3/Task 11 - Profit and Loss/sql/expense_vendor_audit.sql:50: trailing whitespace.
+[32m+[m[32mSELECT[m[41m [m
+phase-3/Task 11 - Profit and Loss/sql/financial_schema_audit.sql:21: trailing whitespace.
+[32m+[m[32mSELECT *[m[41m [m
+phase-3/Task 11 - Profit and Loss/sql/financial_schema_audit.sql:31: trailing whitespace.
+[32m+[m[32mSELECT *[m[41m [m
+phase-3/Task 11 - Profit and Loss/sql/financial_schema_audit.sql:37: trailing whitespace.
+[32m+[m[32mSELECT[m[41m [m
+phase-3/Task 11 - Profit and Loss/sql/financial_schema_audit.sql:54: trailing whitespace.
+[32m+[m[32m        CASE[m[41m [m
+phase-3/Task 12 - Invoices Receivables and Cash Flow/dashboard/8_Receivables_Cash_Flow.py:326: trailing whitespace.
+[32m+[m[41m    [m
+phase-3/Task 12 - Invoices Receivables and Cash Flow/dashboard/8_Receivables_Cash_Flow.py:327: trailing whitespace.
+[32m+[m[41m    [m
+phase-3/Task 13 - Cross Department Impact View/task13_step4_compare.py:154: new blank line at EOF.
+phase-3/Task 13 - Cross Department Impact View/task13_step4_difference_notes.txt:11: trailing whitespace.
+[32m+[m[32mMetrics missing from actual output:[m[41m [m
+phase-3/Task 13 - Cross Department Impact View/task13_step4_difference_notes.txt:12: trailing whitespace.
+[32m+[m[32mMetrics missing from reference:[m[41m [m

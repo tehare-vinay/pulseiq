@@ -1,0 +1,256 @@
+﻿.env.example
+.gitignore
+Dockerfile
+Dockerfile.superset
+README.md
+README_TASK2_PATCH.md
+Task 1 - ETL/README.md
+Task 1 - ETL/check_placeholder_keys.py
+Task 1 - ETL/etl_pipeline.py
+Task 1 - ETL/etl_run_log.csv
+Task 1 - ETL/etl_validation_report.csv
+Task 1 - ETL/phase1_validation_report.csv
+Task 1 - ETL/profile_data.py
+Task 1 - ETL/requirements.txt
+Task 1 - ETL/star_schema.md
+Task 1 - ETL/superset_config.py
+Task 1 - ETL/task1_data_rules.md
+Task 1 - ETL/validate_phase1.py
+Task 2 - Warehouse/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - README_duplicate_rows.csv
+Task 2 - Warehouse/data_profile_columns.csv
+Task 2 - Warehouse/data_profile_summary.csv
+Task 2 - Warehouse/etl_run_log.csv
+Task 2 - Warehouse/etl_validation_report.csv
+Task 2 - Warehouse/load_warehouse.py
+Task 2 - Warehouse/metric_dictionary_phase1.csv
+Task 2 - Warehouse/phase1_validation_report.csv
+Task 2 - Warehouse/rejected_rows.csv
+Task 2 - Warehouse/schema.sql
+Task 2 - Warehouse/star_schema.md
+Task 2 - Warehouse/star_schema.mmd
+Task 2 - Warehouse/task1_data_rules.md
+Task 2 - Warehouse/task2_business_questions.md
+Task 2 - Warehouse/task2_employee_history_validation_final.sql
+Task 2 - Warehouse/task2_history_and_reconciliation_notes.md
+Task 2 - Warehouse/task2_orphan_check_results.md
+Task 2 - Warehouse/task2_row_count_reconciliation.sql
+Task 2 - Warehouse/task2_validation_queries.sql
+Task 2 - Warehouse/task4_attendance_anomalies.csv
+Task 2 - Warehouse/task4_department_attendance.csv
+Task 2 - Warehouse/task4_leave_by_type_status.csv
+Task 2 - Warehouse/task4_monthly_attendance_trend.csv
+Task 2 - Warehouse/task4_monthly_summary.csv
+Task 2 - Warehouse/warehouse_attendance_check.csv
+Task 2 - Warehouse/warehouse_fact_leave_invalid_dates.csv
+Task 2 - Warehouse/warehouse_headcount_check.csv
+Task 2 - Warehouse/warehouse_payroll_check.csv
+Task 3 - Dashboard/charts/Current_Headcount_3.yaml
+Task 3 - Dashboard/charts/Employees_by_Role_Role_Mix_5.yaml
+Task 3 - Dashboard/charts/Employees_by_Tenure_Band_4.yaml
+Task 3 - Dashboard/charts/Headcount_by_Department_1.yaml
+Task 3 - Dashboard/charts/Monthly_Attrition_Rate_10.yaml
+Task 3 - Dashboard/charts/Monthly_Exits_9.yaml
+Task 3 - Dashboard/charts/Monthly_Headcount_Trend_2.yaml
+Task 3 - Dashboard/charts/Monthly_Joiners_8.yaml
+Task 3 - Dashboard/charts/Monthly_Workforce_Movement_6.yaml
+Task 3 - Dashboard/dashboards/Headcount__Departments_4.yaml
+Task 3 - Dashboard/databases/PostgreSQL.yaml
+Task 3 - Dashboard/datasets/PostgreSQL/Department_Headcount_Dataset_1.yaml
+Task 3 - Dashboard/datasets/PostgreSQL/Employees_by_Role_Role_Mix_7.yaml
+Task 3 - Dashboard/datasets/PostgreSQL/Employees_by_Tenure_Band_6.yaml
+Task 3 - Dashboard/datasets/PostgreSQL/Monthly_Attrition_Rate_9.yaml
+Task 3 - Dashboard/datasets/PostgreSQL/Monthly_Workforce_Movement_8.yaml
+Task 3 - Dashboard/datasets/PostgreSQL/Untitled_Query_1_3.yaml
+Task 3 - Dashboard/datasets/PostgreSQL/dim_employee_4.yaml
+Task 3 - Dashboard/design_review.md
+Task 3 - Dashboard/metadata.yaml
+Task 3 - Dashboard/style_guide.md
+Task 3 - Data Quality Gatekeeper/documentation/dq_c03_duplicate_payroll_evidence.csv
+Task 3 - Data Quality Gatekeeper/documentation/dq_c09_violation_evidence.csv
+Task 3 - Data Quality Gatekeeper/documentation/dq_results_evidence.csv
+Task 3 - Data Quality Gatekeeper/documentation/step6_dq_gatekeeper_review.md
+Task 3 - Data Quality Gatekeeper/documentation/step6_dq_review_matrix.csv
+Task 3 - Data Quality Gatekeeper/documentation/step7_final_verification.md
+Task 3 - Data Quality Gatekeeper/documentation/step7_final_verification_matrix.csv
+Task 3 - Data Quality Gatekeeper/scripts/run_dq_checks.py
+Task 3 - Data Quality Gatekeeper/sql/dq_checks_task3.sql
+Task 4 - Attendace/Task4-one-page-insight
+Task 4 - Attendace/charts/Approved_Leave_Days_by_Type_17.yaml
+Task 4 - Attendace/charts/Attendance_Anomaly_Flags_18.yaml
+Task 4 - Attendace/charts/Attendance_Rate_by_Weekday_16.yaml
+Task 4 - Attendace/charts/Department_Attendance_Rate_12.yaml
+Task 4 - Attendace/charts/Leave_Requests_by_Type_and_Status_13.yaml
+Task 4 - Attendace/charts/Monthly_Attendance_Rate_vs_3-Month_Rolling_Average_15.yaml
+Task 4 - Attendace/charts/Monthly_Attendance_Trend_11.yaml
+Task 4 - Attendace/charts/Monthly_Late_Arrivals_Trend_14.yaml
+Task 4 - Attendace/dashboards/Attendance__Leave_Analysis_6.yaml
+Task 4 - Attendace/databases/PostgreSQL.yaml
+Task 4 - Attendace/datasets/PostgreSQL/Approved_Leave_Days_by_Type_18.yaml
+Task 4 - Attendace/datasets/PostgreSQL/Attendance_Rate_by_Weekday_17.yaml
+Task 4 - Attendace/datasets/PostgreSQL/Attendance__Leave_Analysis_13.yaml
+Task 4 - Attendace/datasets/PostgreSQL/Department_Attendance_Analysis_11.yaml
+Task 4 - Attendace/datasets/PostgreSQL/Department_Headcount_Dataset_1.yaml
+Task 4 - Attendace/datasets/PostgreSQL/Leave_Requests_by_Type_and_Status_12.yaml
+Task 4 - Attendace/datasets/PostgreSQL/Monthly_Attendance_Rate_vs_3-Month_Rolling_Average_14.yaml
+Task 4 - Attendace/datasets/PostgreSQL/Monthly_Headcount_Trend_Dataset_5.yaml
+Task 4 - Attendace/datasets/PostgreSQL/fact_anomaly_19.yaml
+Task 4 - Attendace/datasets/PostgreSQL/fact_attendance_monthly_10.yaml
+Task 4 - Attendace/task4_insight_note.md
+Task 4 - Attendace/task4_progress.md
+Task 4 - Attendance Anomalies/task4_attendance_anomalies.csv
+Task 4 - Attendance Anomalies/task4_department_attendance.csv
+Task 4 - Attendance Anomalies/task4_leave_by_type_status.csv
+Task 4 - Attendance Anomalies/task4_monthly_attendance_trend.csv
+Task 4 - Attendance Anomalies/task4_monthly_summary.csv
+Task 4 - Governed Metric Layer/README.md
+Task 4 - Governed Metric Layer/documentation/metric_catalog_view.sql
+Task 4 - Governed Metric Layer/documentation/metric_dictionary.csv
+Task 4 - Governed Metric Layer/documentation/metric_manual_check_template.csv
+Task 4 - Governed Metric Layer/sql/metric_views_examples.sql
+Task 5 - First Dashboard/.env.example
+Task 5 - First Dashboard/Final_Dashboard.png
+Task 5 - First Dashboard/README.md
+Task 5 - First Dashboard/app.py
+Task 5 - First Dashboard/requirements.txt
+dashboards/Dashboard/charts/Current_Headcount_3.yaml
+dashboards/Dashboard/charts/Employees_by_Role_Role_Mix_5.yaml
+dashboards/Dashboard/charts/Employees_by_Tenure_Band_4.yaml
+dashboards/Dashboard/charts/Headcount_by_Department_1.yaml
+dashboards/Dashboard/charts/Monthly_Attrition_Rate_10.yaml
+dashboards/Dashboard/charts/Monthly_Exits_9.yaml
+dashboards/Dashboard/charts/Monthly_Headcount_Trend_2.yaml
+dashboards/Dashboard/charts/Monthly_Joiners_8.yaml
+dashboards/Dashboard/charts/Monthly_Workforce_Movement_6.yaml
+dashboards/Dashboard/dashboards/Headcount__Departments_4.yaml
+dashboards/Dashboard/databases/PostgreSQL.yaml
+dashboards/Dashboard/datasets/PostgreSQL/Department_Headcount_Dataset_1.yaml
+dashboards/Dashboard/datasets/PostgreSQL/Employees_by_Role_Role_Mix_7.yaml
+dashboards/Dashboard/datasets/PostgreSQL/Employees_by_Tenure_Band_6.yaml
+dashboards/Dashboard/datasets/PostgreSQL/Monthly_Attrition_Rate_9.yaml
+dashboards/Dashboard/datasets/PostgreSQL/Monthly_Workforce_Movement_8.yaml
+dashboards/Dashboard/datasets/PostgreSQL/Untitled_Query_1_3.yaml
+dashboards/Dashboard/datasets/PostgreSQL/dim_employee_4.yaml
+dashboards/Dashboard/metadata.yaml
+dashboards/design_review.md
+dashboards/style_guide.md
+dashboards/task4_insight_note.md
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - budget_payroll_dept_month.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - data_contracts.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - data_dictionary.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_account.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_client.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_date.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_department.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_employee.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_leave_type.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_location.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_role.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_sprint.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_team.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_vendor.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dq_checks_catalog.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dq_known_issues.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_anomaly.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_attendance_monthly.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_attrition_risk.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_expense.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_forecast.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_headcount_monthly.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_invoice.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_invoice_payment.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_leave.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_ledger.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_payroll.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_task.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - kpi_targets.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - metric_dictionary.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - reconciliation_answer_key.csv
+data/clean/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - reference_summary_dept_month.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - README.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - budget_payroll_dept_month.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - data_contracts.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - data_dictionary.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_account.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_client.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_date.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_department.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_employee.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_leave_type.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_location.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_role.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_sprint.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_team.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dim_vendor.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dq_checks_catalog.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - dq_known_issues.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_anomaly.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_attendance_monthly.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_attrition_risk.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_expense.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_forecast.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_headcount_monthly.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_invoice.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_invoice_payment.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_leave.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_ledger.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_payroll.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - fact_task.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - kpi_targets.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - metric_dictionary.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - reconciliation_answer_key.csv
+data/raw/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - reference_summary_dept_month.csv
+data/rejected/03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - README_duplicate_rows.csv
+data/rejected/rejected_rows.csv
+data/rejected/warehouse_fact_leave_invalid_dates.csv
+docker-compose.backup.yml
+docker-compose.yml
+docs/Task4-one-page-insight
+docs/star_schema.md
+docs/star_schema.mmd
+docs/task2_star_schema.md
+docs/task4_insight_note.md
+docs/task4_progress.md
+documentation/TASK1_PHASE1_UPDATE.md
+documentation/dq_checks_plain_english.md
+documentation/metric_dictionary_phase1.csv
+documentation/official_data_contracts.csv
+documentation/task1_data_contract_notes.md
+documentation/task1_data_rules.md
+documentation/task1_final_verification_report.md
+documentation/task1_leave_date_review.md
+documentation/task2_business_questions.md
+evidence/etl_database_load_report.json
+evidence/etl_row_count_summary.csv
+evidence/etl_run_log.csv
+evidence/etl_validation_report.csv
+load_to_duckdb.py
+logs/data_profile_columns.csv
+logs/data_profile_summary.csv
+logs/etl_database_load_report.json
+logs/etl_duckdb_load_report.json
+logs/etl_duckdb_row_count_summary.csv
+logs/etl_row_count_summary.csv
+logs/etl_run_log.csv
+logs/etl_validation_report.csv
+logs/phase1_validation_report.csv
+logs/task4_attendance_anomalies.csv
+logs/task4_department_attendance.csv
+logs/task4_leave_by_type_status.csv
+logs/task4_monthly_attendance_trend.csv
+logs/task4_monthly_summary.csv
+logs/warehouse_attendance_check.csv
+logs/warehouse_headcount_check.csv
+logs/warehouse_payroll_check.csv
+requirements.txt
+sql/schema.sql
+sql/task2_employee_history_validation_final.sql
+sql/task2_row_count_reconciliation.sql
+sql/task2_validation_queries.backup.sql
+sql/task2_validation_queries.sql
+src/etl/duckdb_loader.py
+src/etl/etl_pipeline.py
+src/etl/profile_data.py
+src/validation/check_placeholder_keys.py
+src/validation/validate_phase1.py
+src/warehouse/load_warehouse.py
+superset_config.py

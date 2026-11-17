@@ -1,15 +1,11 @@
-﻿import os
-from pathlib import Path
+﻿from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
-import psycopg2
 import streamlit as st
-from dotenv import load_dotenv
 
+from cloud_data import load_parquet
 
-# Load the .env file from "Task 5 - First Dashboard".
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 st.set_page_config(
     page_title="Task 8 | Team Productivity",
@@ -18,27 +14,16 @@ st.set_page_config(
 )
 
 
-@st.cache_resource
-def get_connection():
-    """Create a reusable PostgreSQL connection."""
-    return psycopg2.connect(
-        host=os.getenv("PGHOST", "localhost"),
-        port=os.getenv("PGPORT", "5432"),
-        dbname=os.getenv("PGDATABASE", "pulseiq_warehouse"),
-        user=os.getenv("PGUSER", "pulseiq_user"),
-        password=os.getenv("PGPASSWORD", ""),
-        connect_timeout=5,
-    )
-
-
-def read_query(sql, params=None):
-    """Run a read query and return its result as a DataFrame."""
-    with get_connection().cursor() as cur:
-        cur.execute(sql, params or ())
-        columns = [description[0] for description in cur.description]
-        rows = cur.fetchall()
-
-    return pd.DataFrame(rows, columns=columns)
+@st.cache_data(ttl=300)
+def load_task8_data():
+    """Load the privacy-safe exported Parquet datasets."""
+    teams = load_parquet("dim_team")
+    sprints = load_parquet("dim_sprint")
+    velocity = load_parquet("metric_m24_velocity")
+    cycle_time = load_parquet("metric_m25_avg_cycle_time")
+    on_time = load_parquet("metric_m23_on_time_delivery_rate")
+    work = load_parquet("metric_m26_task_health")
+    return teams, sprints, velocity, cycle_time, on_time, work
 
 
 st.title("Team Productivity Dashboard")
@@ -50,93 +35,43 @@ st.info(
     "and are not treated as completed deliveries."
 )
 
-try:
-    # Dimension tables
-    teams = read_query(
-        """
-        SELECT team_id, team_name, active_members
-        FROM public.dim_team
-        ORDER BY team_name
-        """
-    )
 
-    sprints = read_query(
-        """
-        SELECT sprint_id, sprint_name, working_days, start_date, end_date
-        FROM public.dim_sprint
-        ORDER BY start_date, sprint_id
-        """
-    )
+try:
+    teams, sprints, velocity, cycle_time, on_time, work = load_task8_data()
+
+    required_columns = {
+        "dim_team": (teams, ["team_id", "team_name", "active_members"]),
+        "dim_sprint": (sprints, ["sprint_id", "sprint_name", "working_days", "start_date", "end_date"]),
+        "metric_m24_velocity": (velocity, ["team_id", "sprint_id", "completed_story_points"]),
+        "metric_m25_avg_cycle_time": (cycle_time, ["team_id", "sprint_id", "avg_cycle_time_days", "completed_task_count"]),
+        "metric_m23_on_time_delivery_rate": (on_time, ["team_id", "sprint_id", "on_time_tasks", "completed_tasks", "on_time_delivery_rate_pct"]),
+        "metric_m26_task_health": (work, ["team_id", "sprint_id", "cancelled_tasks", "blocked_tasks", "reopened_tasks", "reopen_events"]),
+    }
+    for dataset, (frame, columns) in required_columns.items():
+        missing = [column for column in columns if column not in frame.columns]
+        if missing:
+            raise ValueError(f"{dataset} is missing required columns: {missing}")
 
     if teams.empty or sprints.empty:
         st.error("Team or sprint dimension data is missing.")
         st.stop()
 
-    teams["team_id"] = teams["team_id"].astype(str)
-    teams["active_members"] = pd.to_numeric(
-        teams["active_members"], errors="coerce"
-    )
+# Standardise join/filter key types.
+    for dataframe in [velocity, cycle_time, on_time, work]:
+        dataframe["team_id"] = dataframe["team_id"].astype(str)
+        dataframe["sprint_id"] = dataframe["sprint_id"].astype(str)
 
-    # Filters
-    sprint_options = ["All sprints"] + sprints["sprint_id"].astype(str).tolist()
+    # Restore the original dashboard filters before applying them.
+    sprint_options = ["All sprints"] + sprints["sprint_id"].tolist()
     selected_sprint = st.selectbox("Select sprint", sprint_options)
 
     team_options = teams["team_id"].tolist()
     selected_teams = st.multiselect(
-        "Filter teams",
-        options=team_options,
-        default=team_options,
+        "Filter teams", options=team_options, default=team_options
     )
-
     if not selected_teams:
         st.warning("Select at least one team to display results.")
         st.stop()
-
-    # Governed metric views
-    velocity = read_query(
-        """
-        SELECT team_id, sprint_id, completed_story_points
-        FROM public.metric_m24_velocity
-        """
-    )
-
-    cycle_time = read_query(
-        """
-        SELECT team_id, sprint_id, avg_cycle_time_days, completed_task_count
-        FROM public.metric_m25_avg_cycle_time
-        """
-    )
-
-    on_time = read_query(
-        """
-        SELECT
-            team_id,
-            sprint_id,
-            on_time_tasks,
-            completed_tasks,
-            on_time_delivery_rate_pct
-        FROM public.metric_m23_on_time_delivery_rate
-        """
-    )
-
-    # Task-health metrics use the dedicated view, not the raw fact table.
-    work = read_query(
-        """
-        SELECT
-            team_id,
-            sprint_id,
-            cancelled_tasks,
-            blocked_tasks,
-            reopened_tasks,
-            reopen_events
-        FROM public.metric_m26_task_health
-        """
-    )
-
-    # Standardise join/filter key types.
-    for dataframe in [velocity, cycle_time, on_time, work]:
-        dataframe["team_id"] = dataframe["team_id"].astype(str)
-        dataframe["sprint_id"] = dataframe["sprint_id"].astype(str)
 
     def apply_filters(dataframe):
         result = dataframe[
@@ -487,10 +422,6 @@ try:
             )
         else:
             st.caption(f"Selected sprint: {selected_sprint}")
-
 except Exception as exc:
-    st.error(
-        "Dashboard could not load. Check PostgreSQL connection settings "
-        "and confirm that the required metric views are available."
-    )
+    st.error("Dashboard could not load the exported Parquet data.")
     st.exception(exc)

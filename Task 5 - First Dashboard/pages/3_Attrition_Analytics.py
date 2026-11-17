@@ -1,14 +1,9 @@
-﻿
-import os
-from pathlib import Path
-
-import pandas as pd
+﻿import pandas as pd
 import plotly.express as px
-import psycopg2
 import streamlit as st
-from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=True)
+# Shared loader reads Parquet exports from cloud_data_parquet/.
+from cloud_data import load_parquet
 
 st.set_page_config(
     page_title="PulseIQ | Attrition Analytics",
@@ -33,93 +28,20 @@ st.info(
     "privacy-approved aggregate metrics are displayed."
 )
 
-def get_connection():
-    return psycopg2.connect(
-        host=os.getenv("PGHOST", "localhost"),
-        port=int(os.getenv("PGPORT", "5432")),
-        dbname=os.getenv("PGDATABASE", "pulseiq_warehouse"),
-        user=os.getenv("PGUSER", "pulseiq_user"),
-        password=os.getenv("PGPASSWORD", ""),
-        connect_timeout=5,
-    )
-
-
-
-@st.cache_data(ttl=120)
-def read_query(query):
-    conn = get_connection()
-    try:
-        return pd.read_sql_query(query, conn)
-    finally:
-        conn.close()
-
-
 try:
-    # Governed actual-exit metrics
-    monthly_exits = read_query("""
-        SELECT month_start_date, exits
-        FROM public.metric_m03_exits_total
-        WHERE exits IS NOT NULL
-        ORDER BY month_start_date
-    """)
-   
-    department_exits = read_query("""
-        SELECT month_start_date, department_id, exits
-        FROM public.metric_m03_exits
-        WHERE exits IS NOT NULL
-        ORDER BY month_start_date, department_id
-    """)
-    department_totals = read_query("""
-    SELECT department_id, exits
-    FROM public.metric_m03_exits_by_department
-    WHERE exits IS NOT NULL
-    ORDER BY department_id
-""")
-    
-    attrition_rate = read_query("""
-        SELECT month_start_date, department_id, attrition_rate_pct
-        FROM public.metric_m04_attrition_rate
-        ORDER BY month_start_date, department_id
-    """)
+    # Governed actual-exit metrics (Parquet exports)
+    monthly_exits = load_parquet("metric_m03_exits_total")
+    department_exits = load_parquet("metric_m03_exits")
+    department_totals = load_parquet("metric_m03_exits_by_department")
+    attrition_rate = load_parquet("metric_m04_attrition_rate")
+    voluntary_exits = load_parquet("metric_m06_voluntary_attrition")
 
-    voluntary_exits = read_query("""
-        SELECT month_start_date, department_id, voluntary_exits
-        FROM public.metric_m06_voluntary_attrition
-        ORDER BY month_start_date, department_id
-    """)
-
-    # Aggregate tenure at exit. No employee-level records are displayed.
-    tenure = read_query("""
-        SELECT
-            department_id,
-            COUNT(*) AS exit_records,
-            ROUND(AVG(NULLIF(TRIM(tenure_days), '')::numeric), 1)
-                AS avg_tenure_days
-        FROM public.dim_employee
-        WHERE NULLIF(TRIM(exit_date), '') IS NOT NULL
-          AND NULLIF(TRIM(tenure_days), '') ~ '^[0-9]+([.][0-9]+)?$'
-        GROUP BY department_id
-        HAVING COUNT(*) >= 10
-        ORDER BY department_id
-    """)
-   
-    # Predictions are deliberately aggregated by group, never by person.
-    risk = read_query("""
-        SELECT
-            department_id,
-            risk_band,
-            COUNT(*) AS prediction_records
-        FROM public.fact_attrition_risk
-        WHERE NULLIF(TRIM(department_id), '') IS NOT NULL
-          AND NULLIF(TRIM(risk_band), '') IS NOT NULL
-        GROUP BY department_id, risk_band
-        HAVING COUNT(*) >= 10
-        ORDER BY department_id, risk_band
-    """)
-
+    # Privacy-safe aggregates; no employee-level records are loaded.
+    tenure = load_parquet("task7_tenure_by_department")
+    risk = load_parquet("task7_risk_by_department")
 
 except Exception as exc:
-    st.error("Could not load the Task 7 data.")
+    st.error("Could not load the Task 7 Parquet data.")
     st.code(str(exc))
     st.stop()
 

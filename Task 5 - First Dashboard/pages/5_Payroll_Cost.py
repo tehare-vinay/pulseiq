@@ -1,13 +1,6 @@
-
-import os
-from pathlib import Path
-
 import pandas as pd
-import psycopg2
 import streamlit as st
-from dotenv import load_dotenv
-
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+from cloud_data import load_parquet
 
 st.set_page_config(
     page_title="Payroll Cost Dashboard",
@@ -24,44 +17,12 @@ st.info(
 )
 
 
-def get_connection():
-    return psycopg2.connect(
-        host=os.getenv("PGHOST", "localhost"),
-        port=int(os.getenv("PGPORT", "5432")),
-        dbname=os.getenv("PGDATABASE", "pulseiq_warehouse"),
-        user=os.getenv("PGUSER", "pulseiq_user"),
-        password=os.getenv("PGPASSWORD", ""),
-        connect_timeout=5,
-    )
-
-
 @st.cache_data(ttl=300)
-def read_query(query):
-    with get_connection() as conn:
-        return pd.read_sql_query(query, conn)
-
-
 def load_payroll_metrics():
-    gross = read_query("""
-        SELECT period_end_date, department_id, gross_pay
-        FROM public.metric_m07_gross_pay
-    """)
-
-    net = read_query("""
-        SELECT period_end_date, department_id, net_pay
-        FROM public.metric_m08_net_pay
-    """)
-
-    employer = read_query("""
-        SELECT period_end_date, department_id, employer_cost
-        FROM public.metric_m09_payroll_cost
-    """)
-
-    cost_head = read_query("""
-        SELECT period_end_date, department_id, cost_per_head
-        FROM public.metric_m10_cost_per_head
-    """)
-
+    gross = load_parquet("metric_m07_gross_pay")
+    net = load_parquet("metric_m08_net_pay")
+    employer = load_parquet("metric_m09_payroll_cost")
+    cost_head = load_parquet("metric_m10_cost_per_head")
     return gross, net, employer, cost_head
 
 
@@ -267,5 +228,5 @@ try:
     )
 
 except Exception as exc:
-    st.error("Payroll metrics could not be loaded.")
-    st.code(str(exc))
+    st.error("Payroll metrics could not be loaded from the exported Parquet data.")
+    st.exception(exc)

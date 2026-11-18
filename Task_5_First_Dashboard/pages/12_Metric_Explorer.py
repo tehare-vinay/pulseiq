@@ -16,6 +16,74 @@ st.set_page_config(
 st.title("PulseIQ | Metric Explorer")
 st.caption("Task 18 | Step 3 — Company → Department → Team drill-down")
 
+
+# --------------------------------------------------
+# STEP 1: DEMO ROLE-BASED ACCESS
+# --------------------------------------------------
+PROJECT_ROOT = __import__("pathlib").Path(__file__).resolve().parents[2]
+DEMO_USER_PATHS = [
+    PROJECT_ROOT / "05_Starter" / "05_Starter" / "demo_users.csv",
+    PROJECT_ROOT / "05_Starter" / "demo_users.csv",
+    PROJECT_ROOT / "demo_users.csv",
+]
+
+@st.cache_data(ttl=300)
+def load_demo_users():
+    for candidate in DEMO_USER_PATHS:
+        if candidate.exists():
+            users = pd.read_csv(candidate)
+            required = {"username", "role", "sees"}
+            if not required.issubset(users.columns):
+                raise ValueError("demo_users.csv must contain username, role and sees columns.")
+            users["role"] = users["role"].astype(str).str.upper().str.strip()
+            users["username"] = users["username"].astype(str).str.strip()
+            return users
+    raise FileNotFoundError(
+        "demo_users.csv was not found. Expected it in 05_Starter/05_Starter/."
+    )
+
+try:
+    DEMO_USERS = load_demo_users()
+except Exception as exc:
+    st.error(f"Role configuration unavailable: {exc}")
+    st.stop()
+
+user_by_name = DEMO_USERS.set_index("username")
+selected_user = st.selectbox("Demo user (role view)", DEMO_USERS["username"].tolist())
+current_role = str(user_by_name.loc[selected_user, "role"]).upper()
+role_description = str(user_by_name.loc[selected_user, "sees"])
+
+st.info(
+    f"**Role: {current_role}** — {role_description}\\n\\n"
+    "Demo role simulation only. This selector is not production authentication."
+)
+
+# Permissions follow the descriptions in demo_users.csv. Where the CSV says
+# 'own department' or 'own team', the starter file has no ownership mapping;
+# the page therefore does not pretend to enforce an identity-to-org boundary.
+ROLE_METRICS = {
+    "ADMIN": set(METRICS.keys()) if "METRICS" in globals() else None,
+    "HR": {
+        "Headcount", "Hires", "Total Hires", "Exits", "Total Exits",
+        "Monthly Attrition Rate", "Rolling 12-Month Attrition",
+        "Voluntary Exits", "Exit Type Split", "Employer Payroll Cost",
+        "Cost per Head", "Overtime Share", "Variable Pay Share",
+        "Attendance Rate", "Late Arrival Rate", "Leave Without Pay Days",
+        "Overtime Hours", "Leave Days by Type and Status",
+        "Monthly Department Headcount", "Monthly Department Payroll",
+    },
+    "MANAGER": {"Team Sprint Productivity"},
+    "EXECUTIVE": {
+        "Headcount", "Monthly Attrition Rate", "Rolling 12-Month Attrition",
+        "Employer Payroll Cost", "Cost per Head", "Attendance Rate",
+        "Revenue", "Net Profit", "Operating Margin",
+        "Payroll as % of Revenue", "Days Sales Outstanding (DSO)",
+        "Overdue Receivables", "Task Completion Rate",
+        "On-time Delivery Rate", "Velocity", "Average Cycle Time",
+        "Monthly Cash Flow", "Monthly Profit & Loss",
+    },
+}
+
 METRICS = {
     "Headcount": "metric_m01_headcount",
     "Hires": "metric_m02_hires",
@@ -151,10 +219,45 @@ def get_minimum_group_size(dataset_name: str) -> int | None:
 
     return max(thresholds)
 
+# Role-specific metric allowlists.
+if current_role == "ADMIN":
+    allowed_metric_names = list(METRICS.keys())
+else:
+    allowed_metric_names = [
+        name for name in METRICS
+        if name in ROLE_METRICS.get(current_role, set())
+    ]
+
+# Manager access is limited to team-level datasets that actually expose team_id.
+if current_role == "MANAGER":
+    team_capable = []
+    for candidate_name in allowed_metric_names:
+        try:
+            candidate_frame = load_parquet(METRICS[candidate_name])
+            if candidate_frame is not None and "team_id" in {
+                str(c).lower() for c in candidate_frame.columns
+            }:
+                team_capable.append(candidate_name)
+        except Exception:
+            continue
+    allowed_metric_names = team_capable
+    st.warning(
+        "Manager scope is a demo simulation. demo_users.csv does not map "
+        "manager.demo to a specific team, so this page cannot verify team ownership. "
+        "Do not use this selector as a production access-control boundary."
+    )
+
+if not allowed_metric_names:
+    st.warning(
+        f"No metrics are currently available for the {current_role} role "
+        "under the configured permissions and available dataset columns."
+    )
+    st.stop()
+
 col1, col2 = st.columns(2)
 
 with col1:
-    metric_label = st.selectbox("Choose a metric", list(METRICS))
+    metric_label = st.selectbox("Choose an allowed metric", allowed_metric_names)
 
 dataset_name = METRICS[metric_label]
 
@@ -170,6 +273,13 @@ if df.empty:
 
 dimensions = get_dimensions(df)
 measures = get_measures(df)
+
+# Executive role is restricted to company-level KPI views and time dimensions.
+if current_role == "EXECUTIVE":
+    dimensions = [
+        col for col in dimensions
+        if any(token in str(col).lower() for token in ("date", "month", "period", "quarter", "year"))
+    ]
 
 if not dimensions or not measures:
     st.warning("This dataset does not contain both a supported dimension and numeric measure.")
@@ -187,9 +297,15 @@ measure = st.selectbox("Choose the numeric value", measures)
 
 st.subheader("Organizational Drill-down")
 
+allowed_levels = (
+    ["Company"] if current_role == "EXECUTIVE"
+    else ["Team"] if current_role == "MANAGER"
+    else ["Company", "Department", "Team"]
+)
 level = st.selectbox(
     "Choose drill-down level",
-    ["Company", "Department", "Team"]
+    allowed_levels,
+    help="The available levels depend on the selected demo role."
 )
 
 work = df.copy()
@@ -284,6 +400,11 @@ if level == "Department":
         st.stop()
 
 elif level == "Team":
+    if current_role == "MANAGER":
+        st.caption(
+            "Manager demo view: team-level data only. Team ownership cannot be "
+            "verified because demo_users.csv contains no manager-to-team mapping."
+        )
     if not team_col:
         st.warning(
             "Team-level drill-down is not available for this metric. "
@@ -390,6 +511,7 @@ summary = (
 minimum_group_size = get_minimum_group_size(dataset_name)
 
 st.subheader(f"{metric_label} by {dimension}")
+st.caption(f"Role view: {current_role} | Demo user: {selected_user}")
 st.caption(
     f"Dataset: {dataset_name} | Drill-down level: {level} | "
     "Aggregated from the approved Parquet export."

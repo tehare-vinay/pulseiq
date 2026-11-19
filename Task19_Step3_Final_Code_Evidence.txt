@@ -1,0 +1,2466 @@
+
+========== src/etl/etl_pipeline.py ==========
+from pathlib import Path
+from datetime import datetime
+import hashlib
+import json
+
+import pandas as pd
+
+try:
+    import pandera.pandas as pa
+except ImportError:
+    try:
+        import pandera as pa
+    except ImportError:
+        pa = None
+
+# PulseIQ Task 1: repeatable ETL, conservative cleaning, validation and logs.
+def find_project_root(script_path):
+    for candidate in [script_path.parent, *script_path.parents]:
+        if (candidate / "data" / "raw").is_dir():
+            return candidate
+        if (candidate / "Clean Data").is_dir() and (candidate / "Task 1 - ETL").is_dir():
+            return candidate
+    return script_path.resolve().parent
+
+PROJECT_ROOT = find_project_root(Path(__file__).resolve())
+RAW_DIR = PROJECT_ROOT / "data" / "raw"
+CLEAN_DIR = PROJECT_ROOT / "data" / "clean"
+REJECTED_DIR = PROJECT_ROOT / "data" / "rejected"
+LOG_DIR = PROJECT_ROOT / "logs"
+DOC_DIR = PROJECT_ROOT / "documentation"
+
+DATASET_PREFIX = "03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - "
+README_SUFFIX = "readme.csv"
+DUPLICATE_EXPORT_SUFFIX = "fact_payroll(1).csv"  # duplicate copy of fact_payroll.csv
+
+for folder in (CLEAN_DIR, REJECTED_DIR, LOG_DIR, DOC_DIR):
+    folder.mkdir(parents=True, exist_ok=True)
+
+
+def discover_files():
+    """Use official raw exports; selected-file ZIP fallback supports package validation."""
+    source_dir = RAW_DIR
+    if not source_dir.is_dir() or not list(source_dir.glob("*.csv")):
+        source_dir = PROJECT_ROOT / "Clean Data"
+    files = []
+    for path in sorted(source_dir.glob("*.csv")):
+        name = path.name.lower()
+        if not name.startswith(DATASET_PREFIX.lower()):
+            continue
+        if name.endswith(README_SUFFIX) or name.endswith(DUPLICATE_EXPORT_SUFFIX):
+            continue
+        files.append(path)
+    return files
+
+
+def find_contract_file(files):
+    for path in files:
+        if path.name.lower().endswith("data_contracts.csv"):
+            return path
+    for folder in (RAW_DIR, PROJECT_ROOT / "Clean Data", PROJECT_ROOT / "data" / "contracts"):
+        if folder.exists():
+            matches = list(folder.glob("*data_contracts.csv"))
+            if len(matches) == 1:
+                return matches[0]
+    return None
+
+
+def contract_table_name(feed):
+    import re
+    match = re.search(r"\(([^()]+)\)\s*$", str(feed))
+    return match.group(1).strip().lower() + ".csv" if match else None
+
+
+def validate_contract(df, filename, contracts):
+    """Check required contract columns and nullable=no rules where contract rows exist."""
+    if contracts is None or contracts.empty:
+        return ["Official data contract missing or empty"]
+    rules = contracts.copy()
+    rules.columns = [str(c).strip().lower() for c in rules.columns]
+    rules["_table"] = rules["feed"].map(contract_table_name)
+    matched = rules[rules["_table"] == filename.lower()]
+    if matched.empty:
+        return []  # The contract file covers only explicitly listed feeds.
+    issues = []
+    expected = set(matched["column_name"].astype(str).str.strip().str.lower())
+    actual = set(map(str.lower, df.columns))
+    missing = sorted(expected - actual)
+    if missing:
+        issues.append("Missing contract columns: " + ", ".join(missing))
+    unexpected = sorted(actual - expected)
+    if unexpected:
+        issues.append(
+            "Unexpected columns (preserved; contract review required): "
+            + ", ".join(unexpected)
+        )
+    for _, rule in matched.iterrows():
+        col = str(rule["column_name"]).strip().lower()
+        nullable = str(rule.get("nullable", "yes")).strip().lower() in {"yes", "y", "true", "1"}
+        if col in df.columns and not nullable:
+            blank = df[col].isna() | df[col].astype("string").str.strip().eq("")
+            count = int(blank.sum())
+            if count:
+                issues.append(f"{col}: {count} row(s) violate nullable=no")
+    return issues
+
+
+def write_contract_notes(contracts):
+    DOC_DIR.mkdir(parents=True, exist_ok=True)
+    if contracts is None or contracts.empty:
+        body = "Contract file was not found; column-level contract validation could not run."
+    else:
+        feeds = contracts["feed"].dropna().drop_duplicates().astype(str).tolist()
+        body = (f"Contract rows: {len(contracts)}\nContract feeds: {len(feeds)}\n\n" +
+                "Covered feeds:\n" + "\n".join(f"- {x}" for x in feeds) +
+                "\n\nCoverage note: only feeds explicitly present in data_contracts.csv receive column-level contract checks. Other tables still receive ETL business-rule checks and should have contract rows added in a future contract revision.\n")
+    (DOC_DIR / "task1_data_contract_notes.md").write_text(
+        "# Task 1 â€” Data contract notes\n\nSource: official PulseIQ data_contracts.csv.\n\n" + body +
+        "\n\nRaw source files are read-only. Exact duplicate rows are quarantined with a written reason; repeated business keys are not automatically removed.\n",
+        encoding="utf-8")
+
+
+def load_postgres_idempotently(clean_files):
+    """Transactional truncate/reload into TEXT staging tables; reruns do not append duplicates."""
+    import os, re
+    required = ["PULSEIQ_PGDATABASE", "PULSEIQ_PGUSER", "PULSEIQ_PGPASSWORD"]
+    if not all(os.getenv(k) for k in required):
+        return {"status": "SKIPPED", "details": "Set PULSEIQ_PGDATABASE, PULSEIQ_PGUSER and PULSEIQ_PGPASSWORD; database load not claimed."}
+    try:
+        import psycopg2
+        from psycopg2 import sql
+        from psycopg2.extras import execute_batch
+        conn = psycopg2.connect(host=os.getenv("PULSEIQ_PGHOST", "localhost"), port=int(os.getenv("PULSEIQ_PGPORT", "5432")), dbname=os.environ["PULSEIQ_PGDATABASE"], user=os.environ["PULSEIQ_PGUSER"], password=os.environ["PULSEIQ_PGPASSWORD"])
+        loaded = []
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    for csv_path in clean_files:
+                        df = pd.read_csv(csv_path, low_memory=False)
+                        name = csv_path.name
+                        if name.lower().startswith(DATASET_PREFIX.lower()): name = name[len(DATASET_PREFIX):]
+                        table = re.sub(r"[^a-z0-9_]+", "_", Path(name).stem.lower()).strip("_")
+                        columns = [re.sub(r"[^a-zA-Z0-9_]+", "_", str(c)).strip("_").lower() for c in df.columns]
+                        if len(columns) != len(set(columns)): raise ValueError(f"SQL column-name collision in {csv_path.name}")
+                        cur.execute(sql.SQL("CREATE TABLE IF NOT EXISTS {} ({})").format(sql.Identifier(table), sql.SQL(", ").join(sql.SQL("{} TEXT").format(sql.Identifier(c)) for c in columns)))
+                        cur.execute(sql.SQL("TRUNCATE TABLE {}").format(sql.Identifier(table)))
+                        if columns and len(df):
+                            q = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(sql.Identifier(table), sql.SQL(", ").join(map(sql.Identifier, columns)), sql.SQL(", ").join(sql.Placeholder() for _ in columns))
+                            rows = [tuple(None if pd.isna(v) else str(v) for v in row) for row in df.itertuples(index=False, name=None)]
+                            execute_batch(cur, q.as_string(conn), rows, page_size=1000)
+                        loaded.append({"table": table, "rows": len(df)})
+        finally: conn.close()
+        return {"status": "SUCCESS", "details": json.dumps(loaded)}
+    except Exception as exc:
+        return {"status": "FAILED", "details": f"{type(exc).__name__}: {exc}"}
+
+
+def read_csv(path):
+    last_error = None
+    for encoding in ("utf-8-sig", "utf-8", "cp1252"):
+        try:
+            return pd.read_csv(path, encoding=encoding, low_memory=False)
+        except UnicodeDecodeError as exc:
+            last_error = exc
+    raise ValueError(f"Unable to decode {path.name}: {last_error}")
+
+
+def sha256(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def normalize_headers(df):
+    df = df.copy()
+    df.columns = [str(col).strip().lower() for col in df.columns]
+    if df.columns.duplicated().any():
+        repeated = df.columns[df.columns.duplicated()].tolist()
+        raise ValueError(f"Column names collide after normalization: {repeated}")
+    return df
+
+
+def clean_text_and_blanks(df):
+    """Trim text and standardize blank strings to missing; do not invent values."""
+    df = df.copy()
+    for col in df.select_dtypes(include=["object", "string"]).columns:
+        series = df[col].map(lambda value: value.strip() if isinstance(value, str) else value)
+        df[col] = series.replace(r"^\s*$", pd.NA, regex=True)
+    return df
+
+
+def date_columns(df):
+    for col in df.columns:
+        if (col == "date" or col.endswith("_date") or col.endswith("_at")
+                or col in {"valid_from", "valid_to", "onboarded_on", "trained_through", "scored_at"}):
+            yield col
+
+
+def standardize_dates(df):
+    """Parse date-like columns only when every nonblank source value parses safely."""
+    df = df.copy()
+    warnings = []
+    for col in date_columns(df):
+        original = df[col]
+        nonblank = original.notna() & original.astype("string").str.strip().ne("")
+        try:
+            parsed = pd.to_datetime(original, errors="coerce", format="mixed")
+        except (TypeError, ValueError):
+            parsed = pd.to_datetime(original, errors="coerce", format="mixed")
+        invalid = nonblank & parsed.isna()
+        if invalid.any():
+            warnings.append(f"{col}: {int(invalid.sum())} nonblank value(s) could not be parsed; source values preserved")
+        else:
+            df[col] = parsed
+    return df, warnings
+
+
+def standardize_numeric_types(df):
+    """Convert likely measures to numeric only if conversion loses no nonblank values."""
+    df = df.copy()
+    warnings = []
+    measure_words = ("salary", "pay", "cost", "amount", "revenue", "profit", "expense",
+                     "balance", "debit", "credit", "hours", "days", "rate", "percent",
+                     "pct", "score", "count", "headcount", "story_points", "subtotal",
+                     "quantity", "deduction", "allowance", "gst", "overtime", "forecast_value",
+                     "lower_80", "upper_80", "band_min", "band_mid", "band_max", "quota",
+                     "cycle_time", "reopened_count", "payment_terms", "working_days", "tier_number",
+                     "employees_paid", "hires", "exits", "transfers_in", "transfers_out", "active_members")
+    for col in df.columns:
+        # Never cast identifier/key fields, dates, flags, or categorical labels to numeric.
+        if (
+             col.endswith("_date")
+             or col.endswith("_type")
+             or col in {
+                 "employee_id", "manager_id", "department_id",
+                 "role_id", "date_key", "year_month",
+                 "normal_balance", "cost_center", "pay_type",
+                 "day_of_week", "fiscal_quarter", "gst_registration"
+                 }
+        ):
+            continue
+        if col in {"is_current", "is_active", "is_weekend", "is_holiday", "is_working_day", "is_month_end", "is_leadership", "flagged", "is_overdue_at_cutoff", "completed_on_time", "is_group", "overtime_eligible", "prorated_for_joiners", "carry_forward_allowed", "carried_in_from_prior_period"}:
+            continue
+        tokens = set(col.split("_"))
+        numeric_fields = {"year", "month_number", "quarter", "week_of_year", "fiscal_month_number", "fiscal_quarter", "band_reference_year", "day_of_week", "band_min_annual", "band_mid_annual", "band_max_annual", "tier_number"}
+        if not (tokens.intersection(measure_words) or col in numeric_fields):
+            continue
+        original = df[col]
+        nonblank = original.notna() & original.astype("string").str.strip().ne("")
+        # Dataset exports use commas as thousands separators in numeric measures.
+        normalized = original.astype("string").str.replace(",", "", regex=False)
+        converted = pd.to_numeric(normalized, errors="coerce")
+        invalid = nonblank & converted.isna()
+        if invalid.any():
+            warnings.append(f"{col}: {int(invalid.sum())} value(s) not numeric; source values preserved")
+        else:
+            df[col] = converted
+    return df, warnings
+
+
+def apply_helpers(df, table_name, reference_date):
+    """Add non-destructive ETL helper columns where they do not already exist."""
+    df = df.copy()
+
+    if table_name.endswith("dim_employee.csv") and "hire_date" in df.columns:
+        date_col = "hire_date"
+    else:
+        possible_dates = [
+            c for c in (
+                "period_end_date",
+                "month_end_date",
+                "month_start_date",
+                "date",
+                "entry_date",
+                "start_date",
+                "invoice_date",
+                "expense_date",
+                "forecast_month",
+                "as_of_date",
+            )
+            if c in df.columns
+        ]
+        date_col = possible_dates[0] if possible_dates else None
+
+    if date_col is not None:
+        parsed = pd.to_datetime(df[date_col], errors="coerce")
+        if "etl_year" not in df.columns:
+            df["etl_year"] = parsed.dt.year.astype("Int64")
+        if "etl_month" not in df.columns:
+            df["etl_month"] = parsed.dt.month.astype("Int64")
+
+    if table_name.endswith("dim_employee.csv") and "hire_date" in df.columns:
+        hire = pd.to_datetime(df["hire_date"], errors="coerce")
+        if "valid_to" in df.columns:
+            valid_to = pd.to_datetime(df["valid_to"], errors="coerce")
+            end = valid_to.fillna(reference_date)
+        else:
+            end = pd.Series(reference_date, index=df.index)
+        tenure = (end - hire).dt.days
+        # Negative tenure is kept as NA and flagged by validation; it is not silently corrected.
+        if "tenure_days" not in df.columns:
+            df["tenure_days"] = tenure.where(tenure >= 0).astype("Int64")
+    return df
+
+
+
+def pandera_checks(df, table_name):
+    """Validate critical Task 1 rules and return readable issues."""
+    issues = []
+
+    # Pandera must not fail silently.
+    if pa is None:
+        issues.append(
+            "Pandera is not installed; required Pandera validation "
+            "could not run. Install dependencies from requirements.txt."
+        )
+
+    # Validate date-like columns even if parsing preserved bad source values.
+    for col in df.columns:
+        is_date = (
+            col == "date"
+            or col.endswith("_date")
+            or col.endswith("_at")
+            or col in {
+                "valid_from",
+                "valid_to",
+                "onboarded_on",
+                "trained_through",
+            }
+        )
+
+        if not is_date:
+            continue
+
+        original = df[col]
+        nonblank = (
+            original.notna()
+            & original.astype("string").str.strip().ne("")
+        )
+
+        parsed = pd.to_datetime(
+            original, errors="coerce", format="mixed"
+        )
+        invalid_mask = nonblank & parsed.isna()
+        if col == "valid_to":
+            open_ended = original.astype("string").str.strip().str.startswith("9999-12-31", na=False)
+            invalid_mask &= ~open_ended
+        invalid_count = int(invalid_mask.sum())
+
+        if invalid_count:
+            issues.append(
+                f"{col}: {invalid_count} nonblank invalid date value(s)"
+            )
+
+    # Payroll amounts must not be negative.
+    if table_name.endswith("fact_payroll.csv"):
+        for col in ("gross_pay", "net_pay", "employer_cost"):
+            if col in df.columns:
+                values = pd.to_numeric(df[col], errors="coerce")
+                count = int((values < 0).sum())
+
+                if count:
+                    issues.append(
+                        f"{col}: {count} negative value(s)"
+                    )
+
+    # Employee history: valid_to may be blank for a current record.
+    if table_name.endswith("dim_employee.csv"):
+        if {"valid_from", "valid_to"}.issubset(df.columns):
+            start = pd.to_datetime(df["valid_from"], errors="coerce")
+            end = pd.to_datetime(df["valid_to"], errors="coerce")
+            count = int(
+                (start.notna() & end.notna() & (end < start)).sum()
+            )
+
+            if count:
+                issues.append(
+                    f"valid_to before valid_from: {count} row(s)"
+                )
+
+        if {"hire_date", "exit_date"}.issubset(df.columns):
+            hire = pd.to_datetime(df["hire_date"], errors="coerce")
+            exit_date = pd.to_datetime(df["exit_date"], errors="coerce")
+            count = int(
+                (hire.notna() & exit_date.notna()
+                 & (hire > exit_date)).sum()
+            )
+
+            if count:
+                issues.append(
+                    f"hire_date after exit_date: {count} row(s)"
+                )
+
+    # Leave end date must not precede its start date.
+    if table_name.endswith("fact_leave.csv"):
+        if {"start_date", "end_date"}.issubset(df.columns):
+            start = pd.to_datetime(df["start_date"], errors="coerce")
+            end = pd.to_datetime(df["end_date"], errors="coerce")
+            count = int(
+                (start.notna() & end.notna() & (end < start)).sum()
+            )
+
+            if count:
+                issues.append(
+                    f"leave end_date before start_date: {count} row(s)"
+                )
+
+    # Run Pandera on critical key and payroll rules when available.
+    if pa is not None:
+        checks = {}
+
+        if table_name.endswith("dim_employee.csv"):
+            if "employee_key" in df.columns:
+                checks["employee_key"] = pa.Column(
+                    int, nullable=False, unique=True, required=True
+                )
+
+        if table_name.endswith("fact_payroll.csv"):
+            if "payroll_item_id" in df.columns:
+                checks["payroll_item_id"] = pa.Column(
+                    str, nullable=False, unique=True, required=True
+                )
+
+            for col in ("gross_pay", "net_pay", "employer_cost"):
+                if col in df.columns:
+                    checks[col] = pa.Column(
+                        float,
+                        nullable=True,
+                        checks=pa.Check.ge(0),
+                        coerce=True,
+                        required=False,
+                    )
+
+        try:
+            if checks:
+                pa.DataFrameSchema(
+                    checks, strict=False, coerce=False
+                ).validate(df, lazy=True)
+        except Exception as exc:
+            issues.append(
+                "Pandera validation: "
+                + str(exc).replace("\n", " | ")[:1500]
+            )
+
+    return issues
+
+def main():
+    """Run the Task 1 ETL with repeatable cleaning, quarantine, validation and logs."""
+    started = datetime.now().astimezone().isoformat(timespec="seconds")
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    files = discover_files()
+    if not files:
+        raise FileNotFoundError(f"No official PulseIQ CSVs found in {RAW_DIR}")
+
+    contract_path = find_contract_file(files)
+    contracts = read_csv(contract_path) if contract_path else None
+    if contracts is not None:
+        contracts.columns = [str(column).strip().lower() for column in contracts.columns]
+    write_contract_notes(contracts)
+
+    # Fixed end-of-period reference makes tenure calculations repeatable.
+    reference_date = pd.Timestamp("2026-09-30")
+    logs = []
+    rejected_parts = []
+    validation_rows = []
+
+    if pa is None:
+        print("WARNING: Pandera is not installed; install project requirements to enable schema checks.")
+
+    print("=" * 68)
+    print("PULSEIQ ANALYTICS | TASK 1 ETL")
+    print(f"Run ID: {run_id} | Started: {started}")
+    print(f"Official input files: {len(files)} | Tenure reference date: {reference_date.date()}")
+    print("=" * 68)
+
+    for path in files:
+        input_rows = 0
+        output_rows = 0
+        duplicate_rows = 0
+        quarantined_rows = 0
+        warnings = []
+        validation_issues = []
+        status = "FAILED"
+        error = ""
+        digest = ""
+
+        try:
+            raw = read_csv(path)
+            input_rows = len(raw)
+            digest = sha256(path)
+            df = normalize_headers(raw)
+            df = clean_text_and_blanks(df)
+
+            # Remove exact duplicate rows only; do not deduplicate business keys.
+            duplicate_mask = df.duplicated(keep="first")
+            duplicates = df.loc[duplicate_mask].copy()
+            duplicate_rows = len(duplicates)
+            df = df.loc[~duplicate_mask].copy()
+            if not duplicates.empty:
+                duplicates.insert(0, "_source_file", path.name)
+                duplicates.insert(1, "_rejection_reason", "exact_duplicate_row")
+                rejected_parts.append(duplicates)
+
+            df, date_warnings = standardize_dates(df)
+            warnings.extend(date_warnings)
+
+            # Invalid leave date ranges are quarantined, never silently swapped/deleted.
+            if path.name.lower().endswith("fact_leave.csv"):
+                if {"start_date", "end_date"}.issubset(df.columns):
+                    start_dates = pd.to_datetime(df["start_date"], errors="coerce")
+                    end_dates = pd.to_datetime(df["end_date"], errors="coerce")
+                    invalid_mask = (
+                        start_dates.notna()
+                        & end_dates.notna()
+                        & (end_dates < start_dates)
+                    )
+                    invalid_leaves = df.loc[invalid_mask].copy()
+                    quarantined_rows = len(invalid_leaves)
+
+                    if not invalid_leaves.empty:
+                        invalid_leaves.insert(0, "_source_file", path.name)
+                        invalid_leaves.insert(
+                            1,
+                            "_rejection_reason",
+                            "leave_end_date_before_start_date",
+                        )
+                        rejected_parts.append(invalid_leaves)
+                        # Save invalid leave rows with their rejection reason.
+                        invalid_leave_path = REJECTED_DIR / "warehouse_fact_leave_invalid_dates.csv"
+                        invalid_leaves.to_csv(invalid_leave_path, index=False)
+                        df = df.loc[~invalid_mask].copy()
+                else:
+                    validation_issues.append(
+                        "Required columns start_date/end_date are missing; leave-date rule not checked"
+                    )
+
+            df, numeric_warnings = standardize_numeric_types(df)
+            warnings.extend(numeric_warnings)
+            df = apply_helpers(df, path.name.lower(), reference_date)
+
+            validation_issues.extend(pandera_checks(df, path.name.lower()))
+            validation_issues.extend(validate_contract(df, path.name, contracts))
+
+            if quarantined_rows:
+                validation_issues.append(
+                    f"{quarantined_rows} invalid leave-date row(s) quarantined; source records require business review"
+                )
+
+            # Always write the cleaned output, even when its status is REVIEW.
+            output_path = CLEAN_DIR / path.name
+            df.to_csv(
+                output_path,
+                index=False,
+                date_format="%Y-%m-%d %H:%M:%S",
+            )
+            output_rows = len(df)
+            status = "SUCCESS" if not validation_issues else "REVIEW"
+
+            for issue in validation_issues:
+                validation_rows.append(
+                    {
+                        "run_id": run_id,
+                        "file_name": path.name,
+                        "status": "REVIEW",
+                        "issue": issue,
+                    }
+                )
+
+            print(
+                f"[{status}] {path.name} | in={input_rows:,} out={output_rows:,} "
+                f"exact_duplicates={duplicate_rows:,} quarantined={quarantined_rows:,}"
+            )
+
+        except Exception as exc:
+            error = f"{type(exc).__name__}: {exc}"
+            status = "FAILED"
+            print(f"[FAILED] {path.name}: {error}")
+
+        rows_quarantined_total = duplicate_rows + quarantined_rows
+        rows_passed = output_rows
+
+        logs.append(
+            {
+                "run_id": run_id,
+                "file_name": path.name,
+                "started_at": started,
+                "input_rows": input_rows,
+                "output_rows": output_rows,
+                "rows_passed": rows_passed,
+                "duplicate_rows": duplicate_rows,
+                "invalid_leave_rows_quarantined": quarantined_rows,
+                "rows_quarantined": rows_quarantined_total,
+                "quarantined_rows": quarantined_rows,
+                "rejected_rows": rows_quarantined_total,
+                "source_sha256": digest,
+                "status": status,
+                "warnings": "; ".join(warnings),
+                "validation_issues": "; ".join(validation_issues),
+                "error": error,
+            }
+        )
+
+    # rejected_rows.csv describes this run only; run history remains append-only.
+    rejected_path = REJECTED_DIR / "rejected_rows.csv"
+    if rejected_parts:
+        pd.concat(rejected_parts, ignore_index=True, sort=False).to_csv(
+            rejected_path, index=False
+        )
+    else:
+        pd.DataFrame(
+            columns=["_source_file", "_rejection_reason"]
+        ).to_csv(rejected_path, index=False)
+
+    log_path = LOG_DIR / "etl_run_log.csv"
+    new_log = pd.DataFrame(logs)
+    if log_path.exists():
+        try:
+            old_log = pd.read_csv(log_path)
+            new_log = pd.concat([old_log, new_log], ignore_index=True, sort=False)
+        except (OSError, pd.errors.ParserError, UnicodeDecodeError):
+            # Do not block this run if an older log is malformed; retain current run log.
+            pass
+    new_log.to_csv(log_path, index=False)
+
+    validation_path = LOG_DIR / "etl_validation_report.csv"
+    pd.DataFrame(
+        validation_rows,
+        columns=["run_id", "file_name", "status", "issue"],
+    ).to_csv(validation_path, index=False)
+
+    summary_path = LOG_DIR / "etl_row_count_summary.csv"
+    pd.DataFrame(logs)[
+        [
+            "run_id", "file_name", "input_rows", "rows_passed", "rows_quarantined",
+            "output_rows", "duplicate_rows", "invalid_leave_rows_quarantined",
+            "quarantined_rows", "rejected_rows", "status",
+        ]
+    ].to_csv(summary_path, index=False)
+
+    # Database load status is explicit; missing credentials mean SKIPPED, not success.
+    db_result = load_postgres_idempotently(sorted(CLEAN_DIR.glob("*.csv")))
+    database_report = {"run_id": run_id, **db_result}
+    (LOG_DIR / "etl_database_load_report.json").write_text(
+        json.dumps(database_report, indent=2), encoding="utf-8"
+    )
+
+    # Task 1 requires a local, single-file DuckDB database in addition to the existing PostgreSQL workflow.
+    try:
+        import sys
+        sys.path.insert(0, str(PROJECT_ROOT / "src" / "etl"))
+        from duckdb_loader import load_csv_files
+        duckdb_result = load_csv_files(
+            files,
+            PROJECT_ROOT / "data" / "pulseiq_task1.duckdb",
+            LOG_DIR,
+        )
+    except Exception as exc:
+        duckdb_result = {"status": "FAILED", "database": str(PROJECT_ROOT / "data" / "pulseiq_task1.duckdb"), "details": f"{type(exc).__name__}: {exc}", "tables_loaded": 0, "rows_loaded": 0}
+    (LOG_DIR / "etl_duckdb_load_report.json").write_text(
+        json.dumps({"run_id": run_id, **duckdb_result}, indent=2), encoding="utf-8"
+    )
+
+    metric_files = [
+        path for path in files
+        if path.name.lower().endswith("metric_dictionary.csv")
+    ]
+    if metric_files:
+        metrics = read_csv(metric_files[0])
+        metrics.head(5).to_csv(DOC_DIR / "metric_dictionary_phase1.csv", index=False)
+
+    counts = pd.Series([row["status"] for row in logs]).value_counts().to_dict()
+    print("-" * 68)
+    print(f"Finished. File statuses: {counts}")
+    print(f"Clean output: {CLEAN_DIR}")
+    print(f"Rejected rows: {rejected_path}")
+    print(f"Run history: {log_path}")
+    print(f"Validation report: {validation_path}")
+    print(f"Row-count summary: {summary_path}")
+    print(f"Contract notes: {DOC_DIR / 'task1_data_contract_notes.md'}")
+    print(f"PostgreSQL load: {db_result['status']} â€” {db_result['details']}")
+    print(f"DuckDB load: {duckdb_result['status']} â€” {duckdb_result.get('details', '')}")
+    print("Raw source files were not modified.")
+
+
+if __name__ == "__main__":
+    main()
+
+========== src/warehouse/load_warehouse.py ==========
+"""
+Load the Task 1 clean CSV outputs into the PulseIQ PostgreSQL warehouse.
+
+Safe to rerun: each table uses its declared primary key with
+ON CONFLICT DO UPDATE.
+
+Invalid leave-date rows are quarantined before loading.
+The source/raw CSV files are never changed.
+Extra source fields are preserved in JSONB.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+from datetime import date, datetime
+
+import pandas as pd
+import psycopg2
+from psycopg2.extras import execute_values
+
+
+ROOT = Path(__file__).resolve().parents[2]
+CLEAN_DIR = Path(
+    os.getenv("PULSEIQ_CLEAN_DIR", str(ROOT / "data" / "clean"))
+)
+PREFIX = "03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - "
+
+
+# Each entry:
+# (source file suffix, target table, [(target column, source column), ...], key columns)
+TABLES = [
+    (
+        "dim_department.csv",
+        "dim_department",
+        [
+            ("department_id", "department_id"),
+            ("department_name", "department_name"),
+        ],
+        ["department_id"],
+    ),
+    (
+        "dim_role.csv",
+        "dim_role",
+        [
+            ("role_id", "role_id"),
+            ("department_id", "department_id"),
+            ("role_title", "role_title"),
+        ],
+        ["role_id"],
+    ),
+    (
+        "dim_date.csv",
+        "dim_date",
+        [
+            ("date_key", "date_key"),
+            ("calendar_date", "date"),
+            ("year", "year"),
+            ("month_number", "month_number"),
+        ],
+        ["date_key"],
+    ),
+    (
+        "dim_leave_type.csv",
+        "dim_leave_type",
+        [
+            ("leave_type_id", "leave_type_code"),
+            ("leave_type_name", "leave_type_name"),
+        ],
+        ["leave_type_id"],
+    ),
+    (
+        "dim_employee.csv",
+        "dim_employee",
+        [
+            ("employee_key", "employee_key"),
+            ("employee_id", "employee_id"),
+            ("hire_date", "hire_date"),
+            ("exit_date", "exit_date"),
+            ("department_id", "department_id"),
+            ("role_id", "role_id"),
+            ("valid_from", "valid_from"),
+            ("valid_to", "valid_to"),
+            ("is_current", "is_current"),
+        ],
+        ["employee_key"],
+    ),
+    (
+        "fact_payroll.csv",
+        "fact_payroll",
+        [
+            ("payroll_item_id", "payroll_item_id"),
+            ("employee_id", "employee_id"),
+            ("employee_key", "employee_key"),
+            ("date_key", "date_key"),
+            ("run_id", "run_id"),
+            ("period_end_date", "period_end_date"),
+            ("gross_pay", "gross_pay"),
+            ("net_pay", "net_pay"),
+            ("employer_cost", "employer_cost"),
+            ("overtime_pay", "overtime_pay"),
+            ("overtime_hours", "overtime_hours_paid"),
+        ],
+        ["payroll_item_id"],
+    ),
+    (
+        "fact_attendance_monthly.csv",
+        "fact_attendance_monthly",
+        [
+            ("attendance_fact_id", "attendance_fact_id"),
+            ("employee_id", "employee_id"),
+            ("employee_key", "employee_key"),
+            ("period_end_date", "period_end_date"),
+            ("scheduled_days", "scheduled_days"),
+            ("present_days", "present_days"),
+            ("unpaid_absence_days", "unpaid_absence_days"),
+            ("late_arrivals", "late_arrivals"),
+        ],
+        ["attendance_fact_id"],
+    ),
+    (
+        "fact_leave.csv",
+        "fact_leave",
+        [
+            ("leave_request_id", "leave_request_id"),
+            ("employee_id", "employee_id"),
+            ("employee_key", "employee_key"),
+            ("leave_type_id", "leave_type_code"),
+            ("start_date", "start_date"),
+            ("end_date", "end_date"),
+            ("status", "status"),
+        ],
+        ["leave_request_id"],
+    ),
+    (
+        "fact_headcount_monthly.csv",
+        "fact_headcount_monthly",
+        [
+            ("date_key", "date_key"),
+            ("department_id", "department_id"),
+            ("headcount_start", "headcount_start"),
+            ("headcount_end", "headcount_end"),
+        ],
+        ["date_key", "department_id"],
+    ),
+]
+
+
+DATE_COLUMNS = {
+    "calendar_date",
+    "hire_date",
+    "exit_date",
+    "valid_from",
+    "valid_to",
+    "period_end_date",
+    "start_date",
+    "end_date",
+}
+
+BOOL_COLUMNS = {"is_current"}
+
+
+def find_clean_file(suffix: str) -> Path:
+    matches = sorted(CLEAN_DIR.glob(f"* - {suffix}"))
+
+    if len(matches) != 1:
+        raise FileNotFoundError(
+            f"Expected exactly one clean file ending '- {suffix}' "
+            f"in {CLEAN_DIR}; found {len(matches)}."
+        )
+
+    return matches[0]
+
+
+def blank_to_none(value):
+    if value is None or pd.isna(value):
+        return None
+
+    if isinstance(value, str):
+        value = value.strip()
+        return value if value else None
+
+    return value
+
+
+def to_python(value, target_col):
+    value = blank_to_none(value)
+
+    if value is None:
+        return None
+
+    if target_col in DATE_COLUMNS:
+        if isinstance(value, (pd.Timestamp, datetime, date)):
+            if isinstance(value, (pd.Timestamp, datetime)):
+                return value.date()
+            return value
+
+        date_text = str(value).strip()
+
+        if date_text.startswith("9999-12-31"):
+            return date(9999, 12, 31)
+
+        try:
+            return date.fromisoformat(date_text[:10])
+        except ValueError as exc:
+            raise ValueError(
+                f"Invalid date '{value}' in column '{target_col}'"
+            ) from exc
+
+    if target_col in BOOL_COLUMNS:
+        if isinstance(value, bool):
+            return value
+
+        return str(value).strip().lower() in {
+            "true",
+            "1",
+            "yes",
+            "y",
+        }
+
+    if target_col in {
+        "employee_key",
+        "date_key",
+        "year",
+        "month_number",
+        "headcount_start",
+        "headcount_end",
+        "late_arrivals",
+    }:
+        return int(float(value))
+
+    if target_col in {
+        "gross_pay",
+        "net_pay",
+        "employer_cost",
+        "overtime_pay",
+        "overtime_hours",
+        "scheduled_days",
+        "present_days",
+        "unpaid_absence_days",
+    }:
+        return float(value)
+
+    return str(value) if not isinstance(value, (int, float)) else value
+
+
+def json_safe(value):
+    value = blank_to_none(value)
+
+    if value is None:
+        return None
+
+    if isinstance(value, (pd.Timestamp, datetime, date)):
+        return value.isoformat()
+
+    if hasattr(value, "item"):
+        return value.item()
+
+    return value
+
+
+def quarantine_invalid_leave_rows(df, source_path):
+    """
+    Remove leave rows with missing/unparseable dates or end_date
+    earlier than start_date.
+
+    Invalid rows are saved in a separate warehouse quarantine file.
+    Previously quarantined rows are preserved and exact duplicate
+    quarantine records are removed.
+    """
+    start = pd.to_datetime(df["start_date"], errors="coerce")
+    end = pd.to_datetime(df["end_date"], errors="coerce")
+
+    missing_start = start.isna()
+    missing_end = end.isna()
+    reversed_dates = start.notna() & end.notna() & (end < start)
+
+    invalid_mask = missing_start | missing_end | reversed_dates
+
+    rejected_dir = ROOT / "data" / "rejected"
+    rejected_dir.mkdir(parents=True, exist_ok=True)
+
+    rejected_path = (
+        rejected_dir / "warehouse_fact_leave_invalid_dates.csv"
+    )
+
+    if invalid_mask.any():
+        invalid_rows = df.loc[invalid_mask].copy()
+
+        reasons = []
+        for idx in invalid_rows.index:
+            row_reasons = []
+
+            if missing_start.loc[idx]:
+                row_reasons.append("missing_or_invalid_start_date")
+
+            if missing_end.loc[idx]:
+                row_reasons.append("missing_or_invalid_end_date")
+
+            if reversed_dates.loc[idx]:
+                row_reasons.append("end_date_before_start_date")
+
+            reasons.append(";".join(row_reasons))
+
+        invalid_rows.insert(0, "_source_file", source_path.name)
+        invalid_rows.insert(1, "_rejection_reason", reasons)
+
+        if rejected_path.exists():
+            previous_rows = pd.read_csv(
+                rejected_path,
+                dtype=str,
+                low_memory=False,
+            )
+
+            combined = pd.concat(
+                [previous_rows, invalid_rows],
+                ignore_index=True,
+                sort=False,
+            )
+
+            combined = combined.drop_duplicates()
+        else:
+            combined = invalid_rows
+
+        combined.to_csv(rejected_path, index=False)
+
+        print(
+            f"[QUARANTINE] fact_leave: {len(invalid_rows)} "
+            f"invalid rows recorded in {rejected_path}"
+        )
+    else:
+        print("[QUARANTINE] fact_leave: no invalid date rows found")
+
+    valid_df = df.loc[~invalid_mask].copy()
+
+    return valid_df
+
+
+def load_one(conn, suffix, table, mapping, keys):
+    path = find_clean_file(suffix)
+
+    df = pd.read_csv(path, dtype=str, low_memory=False)
+    df.columns = [str(c).strip().lower() for c in df.columns]
+
+    missing = sorted(
+        {source for _, source in mapping} - set(df.columns)
+    )
+
+    if missing:
+        raise ValueError(
+            f"{path.name} is missing required source columns: {missing}"
+        )
+
+    # Quarantine invalid leave-date records before warehouse insertion.
+    if table == "fact_leave":
+        df = quarantine_invalid_leave_rows(df, path)
+
+    target_cols = [target for target, _ in mapping]
+    source_cols = [source for _, source in mapping]
+
+    extra_cols = [col for col in df.columns if col not in source_cols]
+
+    target_cols_with_attrs = target_cols + ["attributes"]
+
+    key_set = set(keys)
+    update_cols = [
+        col for col in target_cols if col not in key_set
+    ]
+    update_cols.append("attributes")
+
+    rows = []
+
+    for record in df.to_dict(orient="records"):
+        values = [
+            to_python(record[source], target)
+            for target, source in mapping
+        ]
+
+        extras = {
+            col: json_safe(record.get(col))
+            for col in extra_cols
+        }
+
+        rows.append(
+            tuple(values + [json.dumps(extras, ensure_ascii=False)])
+        )
+
+    if not rows:
+        print(f"[LOAD] {table}: no valid source rows; skipped")
+        return 0
+
+    columns_sql = ", ".join(target_cols_with_attrs)
+    placeholders = ["%s"] * len(target_cols) + ["%s::jsonb"]
+    template = "(" + ", ".join(placeholders) + ")"
+
+    conflict_keys = ", ".join(keys)
+
+    assignments = ", ".join(
+        f"{col}=EXCLUDED.{col}" for col in update_cols
+    )
+
+    sql = (
+        f"INSERT INTO warehouse.{table} ({columns_sql}) VALUES %s "
+        f"ON CONFLICT ({conflict_keys}) DO UPDATE SET {assignments}"
+    )
+
+    with conn.cursor() as cur:
+        execute_values(
+            cur,
+            sql,
+            rows,
+            template=template,
+            page_size=1000,
+        )
+
+    print(
+        f"[LOADED] {table}: {len(rows):,} valid source rows "
+        f"(upsert key: {conflict_keys})"
+    )
+
+    return len(rows)
+
+
+def main():
+    if not CLEAN_DIR.exists():
+        raise FileNotFoundError(
+            f"Clean data folder not found: {CLEAN_DIR}"
+        )
+
+    conn = psycopg2.connect(
+        host=os.getenv("PGHOST", "postgres"),
+        port=int(os.getenv("PGPORT", "5432")),
+        dbname=os.getenv("POSTGRES_DB", "pulseiq_warehouse"),
+        user=os.getenv("POSTGRES_USER", "pulseiq_user"),
+        password=os.getenv("POSTGRES_PASSWORD", "pulseiq_local_dev"),
+        connect_timeout=15,
+    )
+
+    conn.autocommit = False
+    total = 0
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SET search_path TO warehouse, public;")
+
+        # Load dimensions before facts to satisfy foreign-key constraints.
+        for spec in TABLES:
+            total += load_one(conn, *spec)
+
+        conn.commit()
+
+        print("=" * 68)
+        print(
+            f"WAREHOUSE LOAD SUCCESSFUL | "
+            f"valid source rows processed: {total:,}"
+        )
+        print(
+            "Safe to rerun: primary-key upserts prevent duplicate "
+            "key inserts."
+        )
+        print(
+            "Invalid leave-date rows, if any, were quarantined."
+        )
+        print("Raw files were not modified.")
+        print("=" * 68)
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        conn.close()
+
+
+if __name__ == "__main__":
+    main()
+
+========== src/etl/duckdb_loader.py ==========
+"""Idempotently load official raw PulseIQ CSV feeds into a local DuckDB file."""
+from __future__ import annotations
+import json
+import re
+import os
+from pathlib import Path
+import pandas as pd
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PREFIX = "03_PulseIQ_Analytics_Star_Schema_Dataset.xlsx - "
+
+
+def table_name(csv_path: Path) -> str:
+    name = csv_path.name
+    if name.lower().startswith(PREFIX.lower()):
+        name = name[len(PREFIX):]
+    result = re.sub(r"[^a-zA-Z0-9_]+", "_", Path(name).stem).strip("_").lower()
+    if not result:
+        raise ValueError(f"Could not derive table name from {csv_path.name}")
+    return result
+
+
+def load_csv_files(csv_files, db_path=None, log_dir=None):
+    import duckdb
+    db_path = Path(db_path or os.getenv("PULSEIQ_DUCKDB_PATH", PROJECT_ROOT / "data" / "pulseiq_task1.duckdb"))
+    log_dir = Path(log_dir or PROJECT_ROOT / "logs")
+    files = sorted(Path(p) for p in csv_files if Path(p).is_file() and Path(p).suffix.lower() == ".csv")
+    if not files:
+        raise FileNotFoundError("No eligible raw CSV feeds found in the configured raw-data directory.")
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    counts = []
+    con = duckdb.connect(str(db_path))
+    try:
+        for i, csv_path in enumerate(files):
+            df = pd.read_csv(csv_path, low_memory=False)
+            if df.columns.duplicated().any():
+                raise ValueError(f"Duplicate columns in {csv_path.name}")
+            table = table_name(csv_path)
+            view = f"_task1_input_{i}"
+            con.register(view, df)
+            try:
+                con.execute(f'CREATE OR REPLACE TABLE "{table}" AS SELECT * FROM "{view}"')
+            finally:
+                con.unregister(view)
+            actual = int(con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0])
+            expected = int(len(df))
+            counts.append({"csv_file": csv_path.name, "table_name": table, "csv_rows": expected, "duckdb_rows": actual, "match": expected == actual})
+            print(f"[DUCKDB {'OK' if actual == expected else 'MISMATCH'}] {table}: CSV={expected:,} | DuckDB={actual:,}")
+    finally:
+        con.close()
+    summary_path = log_dir / "etl_duckdb_row_count_summary.csv"
+    pd.DataFrame(counts).to_csv(summary_path, index=False)
+    matches = all(row["match"] for row in counts)
+    result = {"status": "SUCCESS" if matches else "FAILED", "database": str(db_path), "tables_loaded": len(counts), "rows_loaded": sum(row["duckdb_rows"] for row in counts), "row_count_summary": str(summary_path), "details": f"CSV row counts matched DuckDB for {sum(row['match'] for row in counts)}/{len(counts)} tables."}
+    (log_dir / "etl_duckdb_load_report.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    if not matches:
+        raise AssertionError(result["details"])
+    return result
+
+
+def discover_raw_files():
+    raw_dir = Path(os.getenv("PULSEIQ_RAW_DIR", PROJECT_ROOT / "data" / "raw"))
+    files = []
+    for path in sorted(raw_dir.glob("*.csv")):
+        name = path.name.lower()
+        if not name.startswith(PREFIX.lower()):
+            continue
+        if name.endswith("readme.csv") or name.endswith("fact_payroll(1).csv"):
+            continue
+        files.append(path)
+    return files
+
+
+def main():
+    result = load_csv_files(discover_raw_files())
+    print("=" * 68)
+    print(f"DUCKDB LOAD {result['status']} | tables={result['tables_loaded']} | rows={result['rows_loaded']:,}")
+    print(f"Database: {result['database']}")
+    print(f"Row-count summary: {result['row_count_summary']}")
+    print("Safe to rerun: each table is replaced from its current clean CSV.")
+    print("=" * 68)
+
+if __name__ == "__main__":
+    main()
+
+========== scripts/convert_to_parquet.py ==========
+from pathlib import Path
+import pandas as pd
+
+source = Path("cloud_data_public")
+target = Path("cloud_data_parquet")
+target.mkdir(exist_ok=True)
+
+files = sorted(source.glob("*.csv"))
+
+if not files:
+    raise SystemExit("ERROR: No public CSV files found.")
+
+for file in files:
+    df = pd.read_csv(file)
+    output = target / f"{file.stem}.parquet"
+    df.to_parquet(output, index=False, engine="pyarrow")
+
+    # Verify that the Parquet file can be reopened
+    check = pd.read_parquet(output)
+    if len(check) != len(df) or list(check.columns) != list(df.columns):
+        raise RuntimeError(f"Verification failed: {file.name}")
+
+    print(f"Verified: {output.name} | {len(check)} rows")
+
+parquet_files = list(target.glob("*.parquet"))
+total_bytes = sum(f.stat().st_size for f in parquet_files)
+
+print("\nPARQUET EXPORT VERIFIED")
+print("Files:", len(parquet_files))
+print("Total size:", round(total_bytes / (1024 * 1024), 3), "MB")
+print("Output folder:", target.resolve())
+
+========== scripts/export_cloud_data.py ==========
+import os
+from pathlib import Path
+
+import pandas as pd
+import psycopg2
+from dotenv import load_dotenv
+from psycopg2 import sql
+
+ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(ROOT / "Task 5 - First Dashboard" / ".env")
+
+conn = psycopg2.connect(
+    host=os.getenv("PGHOST", "localhost"),
+    port=int(os.getenv("PGPORT", "5432")),
+    dbname=os.getenv("PGDATABASE", "pulseiq_warehouse"),
+    user=os.getenv("PGUSER", "pulseiq_user"),
+    password=os.getenv("PGPASSWORD", ""),
+    connect_timeout=10,
+)
+
+output_dir = ROOT / "cloud_data"
+output_dir.mkdir(exist_ok=True)
+
+try:
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT table_name
+            FROM information_schema.views
+            WHERE table_schema = 'public'
+              AND table_name LIKE 'metric_%'
+            ORDER BY table_name;
+        """)
+        views = [row[0] for row in cur.fetchall()]
+
+    total_bytes = 0
+
+    for view in views:
+        query = sql.SQL("SELECT * FROM public.{}").format(
+            sql.Identifier(view)
+        )
+        df = pd.read_sql_query(query.as_string(conn), conn)
+        file_path = output_dir / f"{view}.csv"
+        df.to_csv(file_path, index=False)
+
+        size = file_path.stat().st_size
+        total_bytes += size
+        print(f"{view}: {len(df)} rows | {size / 1024:.2f} KB")
+
+    print("\nExport completed.")
+    print(f"Views exported: {len(views)}")
+    print(f"Total export size: {total_bytes / (1024 * 1024):.2f} MB")
+    print(f"Export folder: {output_dir}")
+
+    if total_bytes > 200 * 1024 * 1024:
+        print("WARNING: Export exceeds the 200 MB limit.")
+finally:
+    conn.close()
+
+========== scripts/export_safe_aggregates.py ==========
+from pathlib import Path
+import os
+import pandas as pd
+import psycopg2
+from dotenv import load_dotenv
+
+ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(ROOT / "Task_5_First_Dashboard" / ".env")
+
+OUT = ROOT / "cloud_data_public"
+OUT.mkdir(exist_ok=True)
+MIN_GROUP_SIZE = 5
+
+conn = psycopg2.connect(
+    host=os.getenv("PGHOST", "localhost"),
+    port=int(os.getenv("PGPORT", "5432")),
+    dbname=os.getenv("PGDATABASE", "pulseiq_warehouse"),
+    user=os.getenv("PGUSER", "pulseiq_user"),
+    password=os.getenv("PGPASSWORD", ""),
+)
+
+def read_table(name):
+    return pd.read_sql_query(f'SELECT * FROM public."{name}"', conn)
+
+def numeric(df, columns):
+    for col in columns:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+    return df
+
+try:
+    # 1. Payroll: month and department aggregates
+    df = read_table("fact_payroll")
+    df = numeric(df, [
+        "gross_pay", "net_pay", "employer_cost", "overtime_hours_paid"
+    ])
+    g = df.groupby(["period_end_date", "department_id"], dropna=False)
+    payroll = g.agg(
+        employee_count=("employee_id", "nunique"),
+        gross_pay=("gross_pay", "sum"),
+        net_pay=("net_pay", "sum"),
+        employer_cost=("employer_cost", "sum"),
+        overtime_hours=("overtime_hours_paid", "sum"),
+    ).reset_index()
+    payroll = payroll[payroll.employee_count >= MIN_GROUP_SIZE]
+    payroll.drop(columns=["employee_count"]).to_csv(
+        OUT / "cloud_payroll_monthly_department.csv", index=False
+    )
+
+    # 2. Headcount: month and department aggregates
+    df = read_table("fact_headcount_monthly")
+    df = numeric(df, [
+        "headcount_start", "hires", "exits", "voluntary_exits",
+        "transfers_in", "transfers_out", "headcount_end",
+        "attrition_rate_monthly_pct"
+    ])
+    headcount = df.groupby(
+        ["month_start_date", "department_id"], dropna=False
+    ).agg(
+        headcount_start=("headcount_start", "sum"),
+        hires=("hires", "sum"),
+        exits=("exits", "sum"),
+        voluntary_exits=("voluntary_exits", "sum"),
+        transfers_in=("transfers_in", "sum"),
+        transfers_out=("transfers_out", "sum"),
+        headcount_end=("headcount_end", "sum"),
+    ).reset_index()
+    headcount = headcount[headcount.headcount_end >= MIN_GROUP_SIZE]
+    headcount.to_csv(OUT / "cloud_headcount_monthly_department.csv", index=False)
+
+    # 3. Tasks: team and sprint aggregates
+    df = read_table("fact_task")
+    df = numeric(df, ["story_points", "cycle_time_days", "reopened_count"])
+    df["_status"] = df["status"].astype(str).str.lower().str.strip()
+    df["_on_time"] = df["completed_on_time"].astype(str).str.lower().isin(
+        ["true", "t", "1", "yes"]
+    )
+    df["_overdue"] = df["is_overdue_at_cutoff"].astype(str).str.lower().isin(
+        ["true", "t", "1", "yes"]
+    )
+    g = df.groupby(["team_id", "sprint_id"], dropna=False)
+    tasks = g.agg(
+        assignee_count=("assignee_employee_id", "nunique"),
+        task_count=("task_id", "count"),
+        completed_tasks=("_status", lambda s: s.eq("completed").sum()),
+        cancelled_tasks=("_status", lambda s: s.eq("cancelled").sum()),
+        overdue_tasks=("_overdue", "sum"),
+        on_time_completed_tasks=("_on_time", "sum"),
+        story_points=("story_points", "sum"),
+        average_cycle_time_days=("cycle_time_days", "mean"),
+        reopen_events=("reopened_count", "sum"),
+    ).reset_index()
+    tasks = tasks[tasks.assignee_count >= MIN_GROUP_SIZE]
+    tasks.drop(columns=["assignee_count"]).to_csv(
+        OUT / "cloud_team_sprint_productivity.csv", index=False
+    )
+
+    # 4. Anomalies: source dataset and period aggregates
+    df = read_table("fact_anomaly")
+    df["money_at_risk"] = pd.to_numeric(
+        df["money_at_risk"], errors="coerce"
+    ).fillna(0)
+    df["_flagged"] = df["flagged"].astype(str).str.lower().isin(
+        ["true", "t", "1", "yes"]
+    )
+    g = df.groupby(["source_dataset", "period"], dropna=False)
+    anomalies = g.agg(
+        employee_count=("employee_id", "nunique"),
+        anomaly_records=("result_id", "count"),
+        flagged_records=("_flagged", "sum"),
+        money_at_risk=("money_at_risk", "sum"),
+    ).reset_index()
+    anomalies = anomalies[anomalies.employee_count >= MIN_GROUP_SIZE]
+    anomalies.drop(columns=["employee_count"]).to_csv(
+        OUT / "cloud_anomaly_summary.csv", index=False
+    )
+
+    # 5. Forecasts: month, department and metric aggregates
+    df = read_table("fact_forecast")
+    df = numeric(df, ["forecast_value", "lower_80", "upper_80"])
+    forecasts = df.groupby(
+        ["forecast_month", "department_id", "metric"], dropna=False
+    ).agg(
+        forecast_value=("forecast_value", "mean"),
+        lower_80=("lower_80", "mean"),
+        upper_80=("upper_80", "mean"),
+    ).reset_index()
+    forecasts.to_csv(OUT / "cloud_forecast_summary.csv", index=False)
+
+    print("\nAggregate exports completed:")
+    for file in sorted(OUT.glob("cloud_*.csv")):
+        print(f"{file.name}: {len(pd.read_csv(file))} rows")
+    size = sum(f.stat().st_size for f in OUT.glob("*.csv"))
+    print(f"\nAll public CSV size: {size / (1024 * 1024):.3f} MB")
+    print("Minimum group-size rule:", MIN_GROUP_SIZE)
+
+finally:
+    conn.close()
+
+
+========== scripts/export_task7_aggregates.py ==========
+import os
+from pathlib import Path
+
+import pandas as pd
+import psycopg2
+from dotenv import load_dotenv
+
+ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(ROOT / "Task 5 - First Dashboard" / ".env", override=True)
+
+OUT = ROOT / "cloud_data_parquet"
+OUT.mkdir(exist_ok=True)
+
+conn = psycopg2.connect(
+    host=os.getenv("PGHOST", "localhost"),
+    port=int(os.getenv("PGPORT", "5432")),
+    dbname=os.getenv("PGDATABASE", "pulseiq_warehouse"),
+    user=os.getenv("PGUSER", "pulseiq_user"),
+    password=os.getenv("PGPASSWORD", ""),
+    connect_timeout=10,
+)
+
+queries = {
+    "task7_tenure_by_department": """
+        SELECT
+            department_id,
+            COUNT(*) AS exit_records,
+            ROUND(AVG(NULLIF(TRIM(tenure_days), '')::numeric), 1)
+                AS avg_tenure_days
+        FROM public.dim_employee
+        WHERE NULLIF(TRIM(exit_date), '') IS NOT NULL
+          AND NULLIF(TRIM(tenure_days), '') ~ '^[0-9]+([.][0-9]+)?$'
+        GROUP BY department_id
+        HAVING COUNT(*) >= 10
+        ORDER BY department_id
+    """,
+    "task7_risk_by_department": """
+        SELECT
+            department_id,
+            risk_band,
+            COUNT(*) AS prediction_records
+        FROM public.fact_attrition_risk
+        WHERE NULLIF(TRIM(department_id), '') IS NOT NULL
+          AND NULLIF(TRIM(risk_band), '') IS NOT NULL
+        GROUP BY department_id, risk_band
+        HAVING COUNT(*) >= 10
+        ORDER BY department_id, risk_band
+    """
+}
+
+try:
+    for name, query in queries.items():
+        df = pd.read_sql_query(query, conn)
+        path = OUT / f"{name}.parquet"
+        df.to_parquet(path, index=False, engine="pyarrow")
+
+        check = pd.read_parquet(path)
+        if len(check) != len(df) or list(check.columns) != list(df.columns):
+            raise RuntimeError(f"Verification failed: {name}")
+
+        print(f"Verified: {path.name} | Rows: {len(check)}")
+finally:
+    conn.close()
+
+print("Task 7 aggregate export completed.")
+
+========== scripts/export_task11_12.py ==========
+from pathlib import Path
+import os
+import pandas as pd
+import psycopg2
+from dotenv import load_dotenv
+from psycopg2 import sql
+
+ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(ROOT / "Task 5 - First Dashboard" / ".env")
+
+views = [
+    "vw_task11_expense_by_category",
+    "vw_task11_monthly_expense_bills",
+    "vw_task11_monthly_pnl",
+    "vw_task11_top10_vendors",
+    "vw_task12_client_days_to_pay",
+    "vw_task12_monthly_cash_flow",
+    "vw_task12_overdue_clients",
+    "vw_task12_receivables_ageing",
+]
+
+conn = psycopg2.connect(
+    host=os.getenv("PGHOST", "localhost"),
+    port=int(os.getenv("PGPORT", "5432")),
+    dbname=os.getenv("PGDATABASE", "pulseiq_warehouse"),
+    user=os.getenv("PGUSER", "pulseiq_user"),
+    password=os.getenv("PGPASSWORD", ""),
+)
+
+try:
+    out = ROOT / "cloud_data"
+    for view in views:
+        query = sql.SQL("SELECT * FROM public.{}").format(
+            sql.Identifier(view)
+        )
+        df = pd.read_sql_query(query.as_string(conn), conn)
+        df.to_csv(out / f"{view}.csv", index=False)
+        print(f"{view}: {len(df)} rows exported")
+finally:
+    conn.close()
+
+========== Task_5_First_Dashboard/pages/12_Metric_Explorer.py ==========
+from __future__ import annotations
+
+import re
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+
+from cloud_data import load_parquet
+
+st.set_page_config(
+    page_title="PulseIQ | Metric Explorer",
+    page_icon="ðŸ”Ž",
+    layout="wide"
+)
+
+st.title("PulseIQ | Metric Explorer")
+st.caption("Task 18 | Step 3 â€” Company â†’ Department â†’ Team drill-down")
+
+
+# --------------------------------------------------
+# STEP 1: DEMO ROLE-BASED ACCESS
+# --------------------------------------------------
+PROJECT_ROOT = __import__("pathlib").Path(__file__).resolve().parents[2]
+DEMO_USER_PATHS = [
+    PROJECT_ROOT / "05_Starter" / "05_Starter" / "demo_users.csv",
+    PROJECT_ROOT / "05_Starter" / "demo_users.csv",
+    PROJECT_ROOT / "demo_users.csv",
+]
+
+@st.cache_data(ttl=300)
+def load_demo_users():
+    for candidate in DEMO_USER_PATHS:
+        if candidate.exists():
+            users = pd.read_csv(candidate)
+            required = {"username", "role", "sees"}
+            if not required.issubset(users.columns):
+                raise ValueError("demo_users.csv must contain username, role and sees columns.")
+            users["role"] = users["role"].astype(str).str.upper().str.strip()
+            users["username"] = users["username"].astype(str).str.strip()
+            return users
+    raise FileNotFoundError(
+        "demo_users.csv was not found. Expected it in 05_Starter/05_Starter/."
+    )
+
+try:
+    DEMO_USERS = load_demo_users()
+except Exception as exc:
+    st.error(f"Role configuration unavailable: {exc}")
+    st.stop()
+
+user_by_name = DEMO_USERS.set_index("username")
+selected_user = st.selectbox("Demo user (role view)", DEMO_USERS["username"].tolist())
+current_role = str(user_by_name.loc[selected_user, "role"]).upper()
+role_description = str(user_by_name.loc[selected_user, "sees"])
+
+st.info(
+    f"**Role: {current_role}** â€” {role_description}\\n\\n"
+    "Demo role simulation only. This selector is not production authentication."
+)
+
+# Permissions follow the descriptions in demo_users.csv. Where the CSV says
+# 'own department' or 'own team', the starter file has no ownership mapping;
+# the page therefore does not pretend to enforce an identity-to-org boundary.
+ROLE_METRICS = {
+    "ADMIN": set(METRICS.keys()) if "METRICS" in globals() else None,
+    "HR": {
+        "Headcount", "Hires", "Total Hires", "Exits", "Total Exits",
+        "Monthly Attrition Rate", "Rolling 12-Month Attrition",
+        "Voluntary Exits", "Exit Type Split", "Employer Payroll Cost",
+        "Cost per Head", "Overtime Share", "Variable Pay Share",
+        "Attendance Rate", "Late Arrival Rate", "Leave Without Pay Days",
+        "Overtime Hours", "Leave Days by Type and Status",
+        "Monthly Department Headcount", "Monthly Department Payroll",
+    },
+    "MANAGER": {"Team Sprint Productivity"},
+    "EXECUTIVE": {
+        "Headcount", "Monthly Attrition Rate", "Rolling 12-Month Attrition",
+        "Employer Payroll Cost", "Cost per Head", "Attendance Rate",
+        "Revenue", "Net Profit", "Operating Margin",
+        "Payroll as % of Revenue", "Days Sales Outstanding (DSO)",
+        "Overdue Receivables", "Task Completion Rate",
+        "On-time Delivery Rate", "Velocity", "Average Cycle Time",
+        "Monthly Cash Flow", "Monthly Profit & Loss",
+    },
+}
+
+METRICS = {
+    "Headcount": "metric_m01_headcount",
+    "Hires": "metric_m02_hires",
+    "Total Hires": "metric_m02_hires_total",
+    "Exits": "metric_m03_exits",
+    "Total Exits": "metric_m03_exits_total",
+    "Monthly Attrition Rate": "metric_m04_attrition_rate",
+    "Rolling 12-Month Attrition": "metric_m05_rolling_12m_attrition",
+    "Voluntary Exits": "metric_m06_voluntary_attrition",
+    "Exit Type Split": "metric_m07_exit_type_split",
+    "Gross Pay": "metric_m07_gross_pay",
+    "Net Pay": "metric_m08_net_pay",
+    "Employer Payroll Cost": "metric_m09_payroll_cost",
+    "Cost per Head": "metric_m10_cost_per_head",
+    "Overtime Share": "metric_m11_overtime_share",
+    "Variable Pay Share": "metric_m12_variable_pay_share",
+    "Attendance Rate": "metric_m13_attendance_rate",
+    "Late Arrival Rate": "metric_m14_late_arrival_rate",
+    "Leave Without Pay Days": "metric_m15_lop_days",
+    "Revenue": "metric_m16_revenue",
+    "Net Profit": "metric_m17_net_profit",
+    "Operating Margin": "metric_m18_operating_margin",
+    "Payroll as % of Revenue": "metric_m19_payroll_pct_revenue",
+    "Days Sales Outstanding (DSO)": "metric_m20_dso",
+    "Overdue Receivables": "cloud_overdue_summary",
+    "Task Completion Rate": "metric_m22_task_completion_rate",
+    "On-time Delivery Rate": "metric_m23_on_time_delivery_rate",
+    "Velocity": "metric_m24_velocity",
+    "Average Cycle Time": "metric_m25_avg_cycle_time",
+    "Anomaly Flag Rate": "metric_m26_anomaly_flag_rate",
+    "High-risk Share": "metric_m27_high_risk_share",
+    "Forecast Error (MAPE)": "metric_m28_forecast_error",
+    "Headcount by Work Location": "metric_m29_headcount_by_work_location",
+    "Headcount by Work Mode": "metric_m30_headcount_by_work_mode",
+    "Headcount by Location Tier": "metric_m31_headcount_by_location_tier",
+    "Overtime Hours": "metric_m32_overtime_hours",
+    "Leave Days by Type and Status": "metric_m33_leave_days_by_type_status",
+    "Monthly Department Headcount": "cloud_headcount_monthly_department",
+    "Monthly Department Payroll": "cloud_payroll_monthly_department",
+    "Team Sprint Productivity": "cloud_team_sprint_productivity",
+    "Vendor Spend": "cloud_vendor_spend_summary",
+    "Client Payment Summary": "cloud_client_payment_summary",
+    "Monthly Cash Flow": "vw_task12_monthly_cash_flow",
+    "Receivables Ageing": "vw_task12_receivables_ageing",
+    "Monthly Profit & Loss": "vw_task11_monthly_pnl",
+    "Expense by Category": "vw_task11_expense_by_category",
+}
+
+DIMENSION_HINTS = (
+    "date", "month", "period", "quarter", "year",
+    "department", "team", "sprint", "location", "mode",
+    "tier", "client", "vendor", "account", "category",
+    "bucket", "status", "type", "source", "metric",
+    "industry", "city", "country", "state", "ageing",
+)
+
+
+def get_dimensions(frame):
+    return [
+        col for col in frame.columns
+        if any(token in str(col).lower() for token in DIMENSION_HINTS)
+    ]
+
+
+def get_measures(frame):
+    excluded = ("_id", "year", "month_number", "tier_number")
+    return [
+        col for col in frame.select_dtypes(include="number").columns
+        if not any(token in str(col).lower() for token in excluded)
+    ]
+
+
+def clean_options(series):
+    return sorted(series.dropna().astype(str).unique().tolist())
+
+
+def get_minimum_group_size(dataset_name: str) -> int | None:
+    """Read approved minimum group size from metric_catalog."""
+
+    combined_metric_ids = {
+        "cloud_headcount_monthly_department": {"M01"},
+        "cloud_payroll_monthly_department": {"M07", "M09"},
+        "cloud_team_sprint_productivity": {"M22", "M23", "M25"},
+    }
+
+    try:
+        catalog = load_parquet("metric_catalog")
+    except Exception:
+        return None
+
+    required = {"metric_id", "minimum_group_size"}
+
+    if catalog.empty or not required.issubset(catalog.columns):
+        return None
+
+    wanted_ids = combined_metric_ids.get(dataset_name)
+
+    if wanted_ids is None:
+        match = re.search(r"M\d+", dataset_name.upper())
+        if not match:
+            return None
+        wanted_ids = {match.group(0)}
+
+    catalog = catalog.copy()
+
+    catalog["_metric_ids"] = catalog["metric_id"].astype(str).str.upper().apply(
+        lambda value: set(re.findall(r"M\d+", value))
+    )
+
+    matched = catalog[
+        catalog["_metric_ids"].apply(
+            lambda ids: bool(ids.intersection(wanted_ids))
+        )
+    ]
+
+    if matched.empty:
+        return None
+
+    thresholds = []
+
+    for value in matched["minimum_group_size"].dropna():
+        # Supports values such as 5, "5 tasks", and "10 people".
+        number = re.search(r"\d+", str(value))
+
+        if number:
+            threshold = int(number.group())
+
+            if threshold > 0:
+                thresholds.append(threshold)
+
+    if not thresholds:
+        return None
+
+    return max(thresholds)
+
+# Role-specific metric allowlists.
+if current_role == "ADMIN":
+    allowed_metric_names = list(METRICS.keys())
+else:
+    allowed_metric_names = [
+        name for name in METRICS
+        if name in ROLE_METRICS.get(current_role, set())
+    ]
+
+# Manager access is limited to team-level datasets that actually expose team_id.
+if current_role == "MANAGER":
+    team_capable = []
+    for candidate_name in allowed_metric_names:
+        try:
+            candidate_frame = load_parquet(METRICS[candidate_name])
+            if candidate_frame is not None and "team_id" in {
+                str(c).lower() for c in candidate_frame.columns
+            }:
+                team_capable.append(candidate_name)
+        except Exception:
+            continue
+    allowed_metric_names = team_capable
+    st.warning(
+        "Manager scope is a demo simulation. demo_users.csv does not map "
+        "manager.demo to a specific team, so this page cannot verify team ownership. "
+        "Do not use this selector as a production access-control boundary."
+    )
+
+if not allowed_metric_names:
+    st.warning(
+        f"No metrics are currently available for the {current_role} role "
+        "under the configured permissions and available dataset columns."
+    )
+    st.stop()
+
+col1, col2 = st.columns(2)
+
+with col1:
+    metric_label = st.selectbox("Choose an allowed metric", allowed_metric_names)
+
+dataset_name = METRICS[metric_label]
+
+try:
+    df = load_parquet(dataset_name)
+except Exception as exc:
+    st.error(f"Unable to load {dataset_name}: {exc}")
+    st.stop()
+
+if df.empty:
+    st.warning("No data is available for this metric.")
+    st.stop()
+
+dimensions = get_dimensions(df)
+measures = get_measures(df)
+
+# Executive role is restricted to company-level KPI views and time dimensions.
+if current_role == "EXECUTIVE":
+    dimensions = [
+        col for col in dimensions
+        if any(token in str(col).lower() for token in ("date", "month", "period", "quarter", "year"))
+    ]
+
+if not dimensions or not measures:
+    st.warning("This dataset does not contain both a supported dimension and numeric measure.")
+    st.dataframe(df, use_container_width=True)
+    st.stop()
+
+with col2:
+    dimension = st.selectbox("Choose a dimension", dimensions)
+
+measure = st.selectbox("Choose the numeric value", measures)
+
+# --------------------------------------------------
+# STEP 3: COMPANY -> DEPARTMENT -> TEAM DRILL-DOWN
+# --------------------------------------------------
+
+st.subheader("Organizational Drill-down")
+
+allowed_levels = (
+    ["Company"] if current_role == "EXECUTIVE"
+    else ["Team"] if current_role == "MANAGER"
+    else ["Company", "Department", "Team"]
+)
+level = st.selectbox(
+    "Choose drill-down level",
+    allowed_levels,
+    help="The available levels depend on the selected demo role."
+)
+
+work = df.copy()
+
+department_col = next(
+    (c for c in work.columns if c.lower() == "department_id"),
+    None
+)
+
+team_col = next(
+    (c for c in work.columns if c.lower() == "team_id"),
+    None
+)
+
+team_lookup = None
+team_department_mapping = None
+
+# Load the approved team dimension only when this dataset contains team_id.
+if team_col:
+    try:
+        team_lookup = load_parquet("dim_team")
+        if team_lookup is not None and not team_lookup.empty:
+            lookup_columns = {str(c).lower(): c for c in team_lookup.columns}
+            lookup_team_col = lookup_columns.get("team_id")
+            lookup_department_col = lookup_columns.get("department_id")
+            if lookup_team_col and lookup_department_col:
+                mapping_columns = [lookup_team_col, lookup_department_col]
+                lookup_active_col = lookup_columns.get("active_members")
+                if lookup_active_col:
+                    mapping_columns.append(lookup_active_col)
+                rename_columns = {lookup_team_col: team_col, lookup_department_col: "department_id"}
+                if lookup_active_col:
+                    rename_columns[lookup_active_col] = "_privacy_population"
+                team_department_mapping = (
+                    team_lookup[mapping_columns]
+                    .rename(columns=rename_columns)
+                    .dropna(subset=[team_col, "department_id"])
+                    .drop_duplicates(subset=[team_col])
+                )
+                # Exclude teams with conflicting department assignments.
+                counts = team_department_mapping.groupby(team_col)["department_id"].nunique()
+                ambiguous = set(counts[counts > 1].index.astype(str))
+                if ambiguous:
+                    team_department_mapping = team_department_mapping[
+                        ~team_department_mapping[team_col].astype(str).isin(ambiguous)
+                    ]
+    except Exception:
+        team_lookup = None
+        team_department_mapping = None
+
+if level == "Department":
+    if department_col:
+        departments = clean_options(work[department_col])
+
+        if not departments:
+            st.warning("No department values are available.")
+            st.stop()
+
+        selected_department = st.selectbox(
+            "Choose department",
+            departments
+        )
+
+        work = work[
+            work[department_col].astype(str) == selected_department
+        ]
+
+    elif team_col and team_department_mapping is not None and not team_department_mapping.empty:
+        work = work.merge(team_department_mapping, on=team_col, how="left", validate="many_to_one")
+        work = work.dropna(subset=["department_id"])
+
+        departments = clean_options(work["department_id"])
+
+        if not departments:
+            st.warning("No department mapping is available for this metric.")
+            st.stop()
+
+        selected_department = st.selectbox(
+            "Choose department",
+            departments
+        )
+
+        work = work[
+            work["department_id"].astype(str) == selected_department
+        ]
+
+    else:
+        st.warning(
+            "Department-level drill-down is not available for this dataset "
+            "because it has no department_id or verified team-to-department mapping."
+        )
+        st.stop()
+
+elif level == "Team":
+    if current_role == "MANAGER":
+        st.caption(
+            "Manager demo view: team-level data only. Team ownership cannot be "
+            "verified because demo_users.csv contains no manager-to-team mapping."
+        )
+    if not team_col:
+        st.warning(
+            "Team-level drill-down is not available for this metric. "
+            "Select a metric containing team_id."
+        )
+        st.stop()
+
+    if team_department_mapping is not None and not team_department_mapping.empty:
+        work = work.merge(team_department_mapping, on=team_col, how="left", validate="many_to_one")
+        work = work.dropna(subset=["department_id"])
+
+        departments = clean_options(work["department_id"])
+
+        if not departments:
+            st.warning("No department mapping is available.")
+            st.stop()
+
+        selected_department = st.selectbox(
+            "Choose department",
+            departments
+        )
+
+        work = work[
+            work["department_id"].astype(str) == selected_department
+        ]
+
+    teams = clean_options(work[team_col])
+
+    if not teams:
+        st.warning("No teams are available for this selection.")
+        st.stop()
+
+    selected_team = st.selectbox("Choose team", teams)
+
+    work = work[
+        work[team_col].astype(str) == selected_team
+    ]
+
+else:
+    st.info("Company level: displaying the complete company dataset.")
+
+# --------------------------------------------------
+# METRIC EXPLORER RESULTS
+# --------------------------------------------------
+
+if work.empty:
+    st.info("No records are available for this drill-down selection.")
+    st.stop()
+
+# Preserve verified population fields before selecting chart columns.
+work = work.copy()
+work[measure] = pd.to_numeric(work[measure], errors="coerce")
+work = work.dropna(subset=[dimension, measure])
+if work.empty:
+    st.info("No usable records are available for this selection.")
+    st.stop()
+
+# Step 4/5 privacy: count PEOPLE, never source rows. Use only population
+# fields from approved aggregate exports / the approved team dimension.
+population_col = next(
+    (c for c in ["_privacy_population", "active_members", "headcount", "headcount_start", "headcount_end"] if c in work.columns),
+    None
+)
+
+if population_col is None and dataset_name == "cloud_payroll_monthly_department":
+    # Payroll exports are department/month aggregates; attach the matching
+    # department-month headcount to determine the population represented.
+    try:
+        hc = load_parquet("cloud_headcount_monthly_department")
+        if {"department_id", "month_start_date", "headcount_start"}.issubset(hc.columns) and {"department_id", "period_end_date"}.issubset(work.columns):
+            hc = hc[["department_id", "month_start_date", "headcount_start"]].copy()
+            hc["_month"] = pd.to_datetime(hc["month_start_date"], errors="coerce").dt.to_period("M")
+            work["_month"] = pd.to_datetime(work["period_end_date"], errors="coerce").dt.to_period("M")
+            work = work.merge(hc[["department_id", "_month", "headcount_start"]], on=["department_id", "_month"], how="left", validate="many_to_one")
+            population_col = "headcount_start"
+    except Exception:
+        population_col = None
+
+if population_col is None:
+    st.warning(
+        "Results are hidden because this dataset does not contain a verified people-count field. "
+        "Source-row counts are not a valid privacy test."
+    )
+    st.stop()
+
+work[population_col] = pd.to_numeric(work[population_col], errors="coerce")
+# Unknown, zero, or negative population values cannot pass a privacy check.
+work = work.dropna(subset=[population_col])
+work = work[work[population_col] > 0]
+if work.empty:
+    st.info("No verified population data is available for this selection.")
+    st.stop()
+
+summary = (
+    work.groupby(dimension, dropna=False)
+    .agg(value=(measure, "sum"), minimum_people=(population_col, "min"))
+    .reset_index()
+)
+
+# --------------------------------------------------
+# STEP 4: MINIMUM GROUP-SIZE PRIVACY SUPPRESSION
+# STEP 5: ADVERSARIAL FILTER TEST / LEAK PREVENTION
+# --------------------------------------------------
+minimum_group_size = get_minimum_group_size(dataset_name)
+
+st.subheader(f"{metric_label} by {dimension}")
+st.caption(f"Role view: {current_role} | Demo user: {selected_user}")
+st.caption(
+    f"Dataset: {dataset_name} | Drill-down level: {level} | "
+    "Aggregated from the approved Parquet export."
+)
+
+if minimum_group_size is None:
+    st.warning(
+        "Privacy threshold could not be read from metric_catalog. "
+        "Results are hidden until an approved minimum group size is available."
+    )
+    st.stop()
+
+# Conservative rule: if any underlying period has fewer than the minimum
+# number of people, hide the whole displayed group. This prevents narrow
+# filters from exposing 1- or 2-person groups.
+visible_summary = summary[summary["minimum_people"] >= minimum_group_size].copy()
+suppressed_count = len(summary) - len(visible_summary)
+
+if visible_summary.empty:
+    st.info(
+        f"No results are displayed because every selected group has fewer than "
+        f"{minimum_group_size} people. Choose a broader drill-down level or another metric."
+    )
+    st.stop()
+
+if suppressed_count:
+    st.warning(
+        f"{suppressed_count} group(s) hidden because their verified population is "
+        f"below {minimum_group_size} people."
+    )
+else:
+    st.caption(
+        f"Privacy check passed: every displayed group has at least "
+        f"{minimum_group_size} people."
+    )
+
+# Display only privacy-screened aggregate results; never expose underlying rows.
+visible_summary = visible_summary.drop(columns=["minimum_people"])
+
+k1, k2 = st.columns(2)
+
+k1.metric("Visible groups", f"{len(visible_summary):,}")
+k2.metric("Visible total", f"{visible_summary['value'].sum():,.2f}")
+
+chart = px.bar(
+    visible_summary,
+    x=dimension,
+    y="value",
+    title=f"{measure} by {dimension}"
+)
+
+chart.update_layout(
+    xaxis_title=dimension,
+    yaxis_title=measure
+)
+
+st.plotly_chart(chart, use_container_width=True)
+
+st.subheader("Results")
+st.dataframe(visible_summary, use_container_width=True, hide_index=True)
+
+========== Task 4 - Governed Metric Layer/sql/metric_views_examples.sql ==========
+CREATE OR REPLACE VIEW public.metric_m01_headcount AS
+ SELECT month_start_date,
+    department_id,
+    sum((NULLIF(headcount_end, ''::text))::numeric) AS headcount
+   FROM fact_headcount_monthly
+  GROUP BY month_start_date, department_id
+ HAVING (sum((NULLIF(headcount_end, ''::text))::numeric) >= (5)::numeric);
+
+CREATE OR REPLACE VIEW public.metric_m02_hires AS
+ SELECT month_start_date,
+    department_id,
+        CASE
+            WHEN (sum((NULLIF(hires, ''::text))::numeric) >= (5)::numeric) THEN sum((NULLIF(hires, ''::text))::numeric)
+            ELSE NULL::numeric
+        END AS hires
+   FROM fact_headcount_monthly
+  GROUP BY month_start_date, department_id
+ HAVING (sum((NULLIF(headcount_end, ''::text))::numeric) >= (5)::numeric);
+
+CREATE OR REPLACE VIEW public.metric_m03_exits AS
+ SELECT month_start_date,
+    department_id,
+        CASE
+            WHEN (sum((NULLIF(exits, ''::text))::numeric) >= (5)::numeric) THEN sum((NULLIF(exits, ''::text))::numeric)
+            ELSE NULL::numeric
+        END AS exits
+   FROM fact_headcount_monthly
+  GROUP BY month_start_date, department_id
+ HAVING (sum((NULLIF(headcount_end, ''::text))::numeric) >= (5)::numeric);
+
+CREATE OR REPLACE VIEW public.metric_m04_attrition_rate AS
+ SELECT month_start_date,
+    department_id,
+        CASE
+            WHEN (count(*) FILTER (WHERE ((COALESCE(NULLIF(headcount_start, ''::text), '0'::text))::numeric > (0)::numeric)) = 0) THEN NULL::numeric
+            ELSE round(((100.0 * sum((COALESCE(NULLIF(exits, ''::text), '0'::text))::numeric)) / NULLIF(sum((COALESCE(NULLIF(headcount_start, ''::text), '0'::text))::numeric), (0)::numeric)), 2)
+        END AS attrition_rate_pct
+   FROM fact_headcount_monthly
+  GROUP BY month_start_date, department_id
+ HAVING (sum((COALESCE(NULLIF(headcount_start, ''::text), '0'::text))::numeric) >= (10)::numeric);
+
+CREATE OR REPLACE VIEW public.metric_m05_rolling_12m_attrition AS
+ WITH monthly AS (
+         SELECT (fact_headcount_monthly.month_start_date)::timestamp without time zone AS month_start_date,
+            fact_headcount_monthly.department_id,
+            sum((COALESCE(NULLIF(fact_headcount_monthly.exits, ''::text), '0'::text))::numeric) AS exits,
+            sum((COALESCE(NULLIF(fact_headcount_monthly.headcount_start, ''::text), '0'::text))::numeric) AS headcount_start
+           FROM fact_headcount_monthly
+          GROUP BY (fact_headcount_monthly.month_start_date)::timestamp without time zone, fact_headcount_monthly.department_id
+        ), rolling AS (
+         SELECT monthly.month_start_date,
+            monthly.department_id,
+            sum(monthly.exits) OVER (PARTITION BY monthly.department_id ORDER BY monthly.month_start_date ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS exits_12m,
+            avg(monthly.headcount_start) OVER (PARTITION BY monthly.department_id ORDER BY monthly.month_start_date ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS avg_headcount_12m,
+            count(*) OVER (PARTITION BY monthly.department_id ORDER BY monthly.month_start_date ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) AS months_available
+           FROM monthly
+        )
+ SELECT month_start_date,
+    department_id,
+        CASE
+            WHEN (months_available = 12) THEN round(((100.0 * exits_12m) / NULLIF(avg_headcount_12m, (0)::numeric)), 2)
+            ELSE NULL::numeric
+        END AS rolling_12m_attrition_pct
+   FROM rolling
+  WHERE (avg_headcount_12m >= (10)::numeric);
+
+CREATE OR REPLACE VIEW public.metric_m06_voluntary_attrition AS
+ SELECT month_start_date,
+    department_id,
+    sum((COALESCE(NULLIF(voluntary_exits, ''::text), '0'::text))::numeric) AS voluntary_exits
+   FROM fact_headcount_monthly
+  GROUP BY month_start_date, department_id
+ HAVING (sum((COALESCE(NULLIF(headcount_start, ''::text), '0'::text))::numeric) >= (10)::numeric);
+
+CREATE OR REPLACE VIEW public.metric_m07_gross_pay AS
+ SELECT period_end_date,
+    department_id,
+    sum((NULLIF(gross_pay, ''::text))::numeric) AS gross_pay
+   FROM fact_payroll
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m08_net_pay AS
+ SELECT period_end_date,
+    department_id,
+    sum((NULLIF(net_pay, ''::text))::numeric) AS net_pay
+   FROM fact_payroll
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m09_payroll_cost AS
+ SELECT period_end_date,
+    department_id,
+    sum((NULLIF(employer_cost, ''::text))::numeric) AS employer_cost
+   FROM fact_payroll
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m10_cost_per_head AS
+ SELECT period_end_date,
+    department_id,
+    (sum((NULLIF(employer_cost, ''::text))::numeric) / (NULLIF(count(DISTINCT employee_id), 0))::numeric) AS cost_per_head
+   FROM fact_payroll
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m11_overtime_share AS
+ SELECT period_end_date,
+    department_id,
+    ((100.0 * sum((NULLIF(overtime_pay, ''::text))::numeric)) / NULLIF(sum((NULLIF(employer_cost, ''::text))::numeric), (0)::numeric)) AS overtime_share_pct
+   FROM fact_payroll
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m12_variable_pay_share AS
+ SELECT period_end_date,
+    department_id,
+    ((100.0 * sum((NULLIF(variable_pay, ''::text))::numeric)) / NULLIF(sum((NULLIF(gross_pay, ''::text))::numeric), (0)::numeric)) AS variable_pay_share_pct
+   FROM fact_payroll
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m13_attendance_rate AS
+ SELECT period_end_date,
+    department_id,
+    ((100.0 * sum((NULLIF(present_days, ''::text))::numeric)) / NULLIF(sum((NULLIF(scheduled_days, ''::text))::numeric), (0)::numeric)) AS attendance_rate_pct
+   FROM fact_attendance_monthly
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m14_late_arrival_rate AS
+ SELECT period_end_date,
+    department_id,
+    ((100.0 * sum((NULLIF(late_arrivals, ''::text))::numeric)) / NULLIF(sum((NULLIF(scheduled_days, ''::text))::numeric), (0)::numeric)) AS late_arrival_rate_pct
+   FROM fact_attendance_monthly
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m15_lop_days AS
+ SELECT period_end_date,
+    department_id,
+    sum((NULLIF(lop_days, ''::text))::numeric) AS lop_days
+   FROM fact_payroll
+  GROUP BY period_end_date, department_id
+ HAVING (count(DISTINCT employee_id) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m16_revenue AS
+ SELECT posting_period,
+    sum((NULLIF(signed_amount_debit_positive, ''::text))::numeric) AS revenue
+   FROM fact_ledger
+  WHERE (account_code = ANY (ARRAY['4001'::text, '4002'::text, '4003'::text, '4004'::text]))
+  GROUP BY posting_period;
+
+CREATE OR REPLACE VIEW public.metric_m17_net_profit AS
+ SELECT posting_period,
+    sum((NULLIF(signed_amount_debit_positive, ''::text))::numeric) AS net_profit
+   FROM fact_ledger
+  WHERE ((account_code ~ '^[0-9]+$'::text) AND (((account_code)::integer >= 4001) AND ((account_code)::integer <= 5999)))
+  GROUP BY posting_period;
+
+CREATE OR REPLACE VIEW public.metric_m18_operating_margin AS
+ WITH monthly AS (
+         SELECT fact_ledger.posting_period,
+            sum(
+                CASE
+                    WHEN (fact_ledger.account_code = ANY (ARRAY['4001'::text, '4002'::text, '4003'::text, '4004'::text])) THEN (NULLIF(fact_ledger.signed_amount_debit_positive, ''::text))::numeric
+                    ELSE (0)::numeric
+                END) AS revenue,
+            sum(
+                CASE
+                    WHEN ((fact_ledger.account_code ~ '^[0-9]+$'::text) AND (((fact_ledger.account_code)::integer >= 4001) AND ((fact_ledger.account_code)::integer <= 5999))) THEN (NULLIF(fact_ledger.signed_amount_debit_positive, ''::text))::numeric
+                    ELSE (0)::numeric
+                END) AS net_profit
+           FROM fact_ledger
+          GROUP BY fact_ledger.posting_period
+        )
+ SELECT posting_period,
+    revenue,
+    net_profit,
+    ((100.0 * net_profit) / NULLIF(revenue, (0)::numeric)) AS operating_margin_pct
+   FROM monthly;
+
+CREATE OR REPLACE VIEW public.metric_m19_payroll_pct_revenue AS
+ WITH payroll AS (
+         SELECT (fact_payroll.period_end_date)::date AS metric_date,
+            sum((NULLIF(fact_payroll.employer_cost, ''::text))::numeric) AS payroll_cost
+           FROM fact_payroll
+          GROUP BY (fact_payroll.period_end_date)::date
+        ), revenue AS (
+         SELECT fact_ledger.posting_period,
+            sum((NULLIF(fact_ledger.signed_amount_debit_positive, ''::text))::numeric) AS revenue
+           FROM fact_ledger
+          WHERE (fact_ledger.account_code = ANY (ARRAY['4001'::text, '4002'::text, '4003'::text, '4004'::text]))
+          GROUP BY fact_ledger.posting_period
+        )
+ SELECT p.metric_date,
+    p.payroll_cost,
+    r.revenue,
+    ((100.0 * p.payroll_cost) / NULLIF(r.revenue, (0)::numeric)) AS payroll_pct_revenue
+   FROM (payroll p
+     JOIN revenue r ON ((to_char((p.metric_date)::timestamp with time zone, 'YYYY-MM'::text) = "left"(r.posting_period, 7))));
+
+CREATE OR REPLACE VIEW public.metric_m20_dso AS
+ SELECT invoice_date,
+    sum((NULLIF(balance_due, ''::text))::numeric) AS closing_receivables,
+    (sum((NULLIF(total_amount, ''::text))::numeric) - sum((NULLIF(gst_amount, ''::text))::numeric)) AS revenue_ex_gst,
+    ((90.0 * sum((NULLIF(balance_due, ''::text))::numeric)) / NULLIF((sum((NULLIF(total_amount, ''::text))::numeric) - sum((NULLIF(gst_amount, ''::text))::numeric)), (0)::numeric)) AS dso_days
+   FROM fact_invoice
+  WHERE (status <> ALL (ARRAY['DRAFT'::text, 'CANCELLED'::text]))
+  GROUP BY invoice_date;
+
+CREATE OR REPLACE VIEW public.metric_m21_overdue_receivables AS
+ SELECT invoice_date,
+    sum((NULLIF(balance_due, ''::text))::numeric) AS overdue_receivables
+   FROM fact_invoice
+  WHERE ((due_date < invoice_date) AND (status <> ALL (ARRAY['DRAFT'::text, 'CANCELLED'::text])))
+  GROUP BY invoice_date;
+
+CREATE OR REPLACE VIEW public.metric_m22_task_completion_rate AS
+ SELECT team_id,
+    count(*) FILTER (WHERE (status = 'Done'::text)) AS completed_tasks,
+    count(*) AS total_tasks,
+    ((100.0 * (count(*) FILTER (WHERE (status = 'Done'::text)))::numeric) / (NULLIF(count(*), 0))::numeric) AS completion_rate_pct
+   FROM fact_task
+  GROUP BY team_id;
+
+CREATE OR REPLACE VIEW public.metric_m23_on_time_delivery_rate AS
+ SELECT team_id,
+    sprint_id,
+    count(*) FILTER (WHERE ((status = 'Done'::text) AND (completed_date IS NOT NULL) AND (due_date IS NOT NULL) AND (completed_date <= due_date))) AS on_time_tasks,
+    count(*) FILTER (WHERE (status = 'Done'::text)) AS completed_tasks,
+    ((100.0 * (count(*) FILTER (WHERE ((status = 'Done'::text) AND (completed_date IS NOT NULL) AND (due_date IS NOT NULL) AND (completed_date <= due_date))))::numeric) / (NULLIF(count(*) FILTER (WHERE (status = 'Done'::text)), 0))::numeric) AS on_time_delivery_rate_pct
+   FROM fact_task
+  GROUP BY team_id, sprint_id
+ HAVING (count(*) FILTER (WHERE (status = 'Done'::text)) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m24_velocity AS
+ SELECT team_id,
+    sprint_id,
+    sum((NULLIF(story_points, ''::text))::numeric) FILTER (WHERE (status = 'Done'::text)) AS completed_story_points
+   FROM fact_task
+  GROUP BY team_id, sprint_id
+ HAVING (count(*) FILTER (WHERE (status = 'Done'::text)) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m25_avg_cycle_time AS
+ SELECT team_id,
+    sprint_id,
+    round(avg((((NULLIF(completed_date, ''::text))::timestamp without time zone)::date - ((NULLIF(started_date, ''::text))::timestamp without time zone)::date)), 2) AS avg_cycle_time_days,
+    count(*) AS completed_task_count
+   FROM fact_task
+  WHERE ((status = 'Done'::text) AND (NULLIF(started_date, ''::text) IS NOT NULL) AND (NULLIF(completed_date, ''::text) IS NOT NULL))
+  GROUP BY team_id, sprint_id
+ HAVING (count(*) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m26_anomaly_flag_rate AS
+ SELECT source_dataset,
+    (date_trunc('month'::text, (NULLIF(period, ''::text))::timestamp without time zone))::date AS month,
+    round(((100.0 * (count(*) FILTER (WHERE (flagged = 'Y'::text)))::numeric) / (NULLIF(count(*), 0))::numeric), 2) AS anomaly_flag_rate_pct,
+    count(*) AS record_count
+   FROM fact_anomaly
+  WHERE (NULLIF(period, ''::text) IS NOT NULL)
+  GROUP BY source_dataset, ((date_trunc('month'::text, (NULLIF(period, ''::text))::timestamp without time zone))::date)
+ HAVING (count(*) >= 5);
+
+CREATE OR REPLACE VIEW public.metric_m27_high_risk_share AS
+ SELECT department_id,
+    count(*) FILTER (WHERE (risk_band = 'High'::text)) AS high_risk_count,
+    count(*) AS total_risk_records,
+    round(((100.0 * (count(*) FILTER (WHERE (risk_band = 'High'::text)))::numeric) / (NULLIF(count(*), 0))::numeric), 2) AS high_risk_share_pct
+   FROM fact_attrition_risk
+  GROUP BY department_id
+ HAVING (count(*) >= 10);
+
+CREATE OR REPLACE VIEW public.metric_m28_forecast_error AS
+ SELECT f.forecast_month,
+    f.department_id,
+    f.metric,
+    (NULLIF(f.forecast_value, ''::text))::numeric AS forecast_value,
+    (h.headcount_end)::numeric AS actual_headcount,
+        CASE
+            WHEN ((h.headcount_end IS NULL) OR ((h.headcount_end)::numeric = (0)::numeric)) THEN NULL::numeric
+            ELSE round(((abs(((h.headcount_end)::numeric - (NULLIF(f.forecast_value, ''::text))::numeric)) / (h.headcount_end)::numeric) * (100)::numeric), 2)
+        END AS mape_pct,
+        CASE
+            WHEN (h.headcount_end IS NULL) THEN 'ACTUAL_NOT_AVAILABLE'::text
+            WHEN ((h.headcount_end)::numeric = (0)::numeric) THEN 'ACTUAL_ZERO_MAPE_UNDEFINED'::text
+            ELSE 'CALCULATED'::text
+        END AS calculation_status
+   FROM (fact_forecast f
+     LEFT JOIN fact_headcount_monthly h ON (((date_trunc('month'::text, (f.forecast_month)::timestamp without time zone) = date_trunc('month'::text, (h.month_start_date)::timestamp without time zone)) AND (f.department_id = h.department_id))))
+  WHERE (f.metric = 'headcount_end'::text);

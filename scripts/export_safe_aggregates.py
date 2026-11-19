@@ -1,11 +1,11 @@
-﻿from pathlib import Path
+from pathlib import Path
 import os
 import pandas as pd
 import psycopg2
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT / "Task 5 - First Dashboard" / ".env")
+load_dotenv(ROOT / "Task_5_First_Dashboard" / ".env")
 
 OUT = ROOT / "cloud_data_public"
 OUT.mkdir(exist_ok=True)

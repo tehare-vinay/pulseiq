@@ -5,6 +5,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from datetime import datetime
+from pathlib import Path
+
 from cloud_data import load_parquet
 
 st.set_page_config(
@@ -260,6 +263,31 @@ with col1:
     metric_label = st.selectbox("Choose an allowed metric", allowed_metric_names)
 
 dataset_name = METRICS[metric_label]
+
+# --------------------------------------------------
+# DATA FRESHNESS STATEMENT
+# --------------------------------------------------
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PARQUET_DIR = PROJECT_ROOT / "cloud_data_parquet"
+parquet_file = PARQUET_DIR / f"{dataset_name}.parquet"
+
+if parquet_file.is_file():
+    last_exported = datetime.fromtimestamp(
+        parquet_file.stat().st_mtime
+    ).astimezone().strftime("%d %b %Y, %I:%M %p %Z")
+
+    st.info(
+        f"Data freshness: Dashboard Parquet export last updated "
+        f"on {last_exported}. "
+        "This timestamp reflects the exported file, not a confirmed "
+        "source-system refresh time."
+    )
+else:
+    st.warning(
+        f"Data freshness unavailable: Parquet export for "
+        f"{dataset_name} was not found."
+    )
 
 try:
     df = load_parquet(dataset_name)
